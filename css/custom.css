@@ -393,3 +393,6 @@ button#go-up:hover #percent {
 }
 
 /* 天气 */
+.s-sticker {
+  width: 200px;
+}
