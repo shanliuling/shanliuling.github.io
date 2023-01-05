@@ -454,3 +454,13 @@ i:hover {
   cursor: url('https://npm.elemecdn.com/akilar-candyassets/image/cur/hf.cur'),
     auto;
 }
+
+/* ip地址获取广告 */
+#welcome-info {
+  background: linear-gradient(45deg, #b9f4f3, #e3fbf9);
+  border-radius: 18px;
+  padding: 8px;
+}
+[data-theme='dark'] #welcome-info {
+  background: #212121;
+}
