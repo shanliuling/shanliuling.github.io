@@ -376,7 +376,7 @@ button#go-up:hover #percent {
   position: fixed;
   /* 指定位置 */
   left: 10px;
-  bottom: 10px;
+  top: 100px;
   z-index: 1919810;
 }
 [data-theme='light'] #fps {
