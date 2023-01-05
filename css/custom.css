@@ -340,6 +340,7 @@ div#archive {
 }
 
 /* 返回顶部 */
+
 button#go-up #percent {
   display: none;
   font-weight: bold;
@@ -347,7 +348,7 @@ button#go-up #percent {
 }
 
 button#go-up span {
-  font-size: 5px !important;
+  font-size: 12px !important;
   margin-right: -1px;
 }
 
