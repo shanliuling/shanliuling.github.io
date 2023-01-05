@@ -391,3 +391,8 @@ button#go-up:hover #percent {
   padding: 4px;
   border-radius: 4px;
 }
+
+/* 天气 */
+.s-sticker {
+  width: 200px;
+}

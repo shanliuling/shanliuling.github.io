@@ -3,8 +3,8 @@
 WIDGET = {
   "CONFIG": {
     "modules": "01234",
-    "background": "1",
-    "tmpColor": "FFFFFF",
+    "background": "5",
+    "tmpColor": "FF9900",
     "tmpSize": "16",
     "cityColor": "FFFFFF",
     "citySize": "16",
@@ -13,7 +13,7 @@ WIDGET = {
     "weatherIconSize": "18",
     "alertIconSize": "18",
     "padding": "10px 10px 10px 10px",
-    "shadow": "1",
+    "shadow": "0",
     "language": "auto",
     "borderRadius": "10",
     "fixed": "false",
