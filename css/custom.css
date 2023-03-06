@@ -375,8 +375,8 @@ button#go-up:hover #percent {
 #fps {
   position: fixed;
   /* 指定位置 */
-  left: 10px;
-  top: 100px;
+  left: 30px;
+  top: 50px;
   z-index: 1919810;
 }
 [data-theme='light'] #fps {
@@ -455,6 +455,7 @@ button#go-up:hover #percent {
 .aside-content {
   max-width: 318px;
   min-width: 300px;
+  margin-top: 60px;
 }
 
 /* 平板尺寸自适应(不启用侧边栏宽度限制) */
