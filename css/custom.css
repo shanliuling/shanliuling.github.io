@@ -407,7 +407,40 @@ button#go-up:hover #percent {
 .menus_items .menus_item:nth-child(2) .menus_item_child {
   left: -125px;
 }
+/* 翻页按钮居中 */
+#pagination {
+  width: 100%;
+  margin: auto;
+}
+/* 随便逛逛 */
+#home_top {
+  margin: 1rem auto 0;
+  padding: 0px 15px;
+  max-width: 1400px;
+  width: 100%;
+}
+#home_top .swiper_container_blog {
+  width: 50%;
+}
+/* 宽屏适配 */
+/* 全局宽度 */
+.layout {
+  max-width: 1400px;
+}
 
+/* 侧边卡片栏宽度 */
+.aside-content {
+  max-width: 318px;
+  min-width: 300px;
+}
+
+/* 平板尺寸自适应(不启用侧边栏宽度限制) */
+@media screen and (max-width: 900px) {
+  .aside-content {
+    max-width: none !important;
+    padding: 0 5px 0 5px;
+  }
+}
 /* 全局默认鼠标指针 */
 body,
 html {
