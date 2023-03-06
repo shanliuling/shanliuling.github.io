@@ -25,11 +25,32 @@
 /* 夜间模式米红灯 */
 /* 日间模式不生效 */
 [data-theme='light'] #site-name,
-[data-theme='light'] #site-title,
-[data-theme='light'] #site-subtitle,
+[data-theme='light'] #site-title {
+  background-image: linear-gradient(#fff, #c21a90);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; /*需要文字透明*/
+  -webkit-text-stroke: 1px #333;
+}
+[data-theme='light'] #site-subtitle {
+  background-image: linear-gradient(#fff, #c21a90);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; /*需要文字透明*/
+  -webkit-text-stroke: 1px #333;
+}
 [data-theme='light'] #post-info {
   animation: none;
 }
+[data-theme='light'] .site-page {
+  background-image: linear-gradient(#fff, #c21a90);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent; /*需要文字透明*/
+
+  -webkit-text-stroke: 1px #333;
+}
+
 /* 夜间模式生效 */
 [data-theme='dark'] #site-name,
 [data-theme='dark'] #site-title {
