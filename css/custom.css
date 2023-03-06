@@ -445,7 +445,17 @@ button#go-up:hover #percent {
   top: -10.5rem;
 }
 #random {
+  /* border: 3px solid !important;
+  border-image: linear-gradient(45deg, gold, deeppink) 1 !important ; */
 }
+[data-theme='dark'] .topGroup .top-group-list-item {
+  background: #000 !important;
+}
+[data-theme='light'] .topGroup .top-group-list-item {
+  background: #fff !important;
+}
+/*  */
+
 /* 分类栏 */
 #category-bar {
   border-image: linear-gradient(45deg, gold, deeppink) 1 !important ;
@@ -453,6 +463,10 @@ button#go-up:hover #percent {
   animation: huerotate 6s infinite linear;
   filter: hue-rotate(360deg);
   opacity: 1 !important;
+  background: #fff !important;
+}
+[data-theme='dark'] #category-bar {
+  background: #000 !important;
 }
 
 @keyframes huerotate {
