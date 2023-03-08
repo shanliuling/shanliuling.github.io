@@ -1,10 +1,43 @@
+/*轮播右侧翻转卡片  */
+.blog-slider__wrp {
+  background: url(https://5b0988e595225.cdn.sohucs.com/images/20190405/205129dd5c1d4798afacef0690937819.gif)
+    no-repeat;
+  background-size: cover;
+  animation: rotate-reverse 1.2s cubic-bezier(0.66, -0.47, 0.33, 1.5) forwards;
+}
+.blog-slider__wrp:hover {
+  animation: rotate 1.2s cubic-bezier(0.66, -0.47, 0.33, 1.5) forwards;
+}
+.blog-slider {
+  height: 21rem !important;
+}
+.topGroup {
+  height: 0 !important;
+}
+@keyframes rotate {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(180deg);
+  }
+}
+@keyframes rotate-reverse {
+  0% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
 /* 页脚与头图透明 */
 #footer {
   background: transparent !important;
 }
-#page-header {
+/* #page-header {
   background: transparent !important;
-}
+} */
 
 /* 白天模式遮罩透明 */
 #footer::before {
@@ -424,7 +457,7 @@ button#go-up:hover #percent {
 #home_top {
   margin: 1rem auto 0;
   padding: 0px 15px;
-  max-width: 1300px;
+  max-width: 1400px;
   width: 100%;
 }
 #random #random-banner #skills-style-group-all {
@@ -472,12 +505,21 @@ button#go-up:hover #percent {
 .layout {
   max-width: 1400px;
 }
+/* 首页文章轮播栏 */
+.recent-post-item {
+  margin-bottom: 30px;
+}
 
 /* 侧边卡片栏宽度 */
 .aside-content {
   max-width: 318px;
   min-width: 300px;
-  margin-top: 60px;
+}
+
+/* 双栏标题字体 */
+.article-title {
+  font-size: 1.8em !important;
+  text-align: center;
 }
 
 /* 平板尺寸自适应(不启用侧边栏宽度限制) */
