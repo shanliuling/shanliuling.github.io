@@ -1,4 +1,6 @@
-<p>同时，上一节最开始安装的环境应该差不多了，那我们就来接着了解一下 Heroku 的打开方式。</p>
+<hr>
+<p>title: 30.基于 Prisma + NestJs 的 Node API ：项目开发与基于 Heroku 部署<br>date: 2023-02-16 16:29:28<br>tags: TypeScript<br>updated: 更新日期<br>cover:<br>description: TS全面进阶指南<br>categories: TS全面进阶指南<br>highlight_shrink: false</p>
+<h2 id="index-false"><a href="#index-false" class="headerlink" title="index: false"></a>index: false</h2><p>同时，上一节最开始安装的环境应该差不多了，那我们就来接着了解一下 Heroku 的打开方式。</p>
 <blockquote>
 <p>本节代码见：<a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Flinbudu599%2Ftiny-book-blog-api">Blog API</a></p>
 </blockquote>
@@ -49,8 +51,8 @@
 </blockquote>
 <p>上一节我们已经介绍了如何在 NestJs 中使用 Prisma ，也完成了相关配置，现在我们可以真正连接到数据库试用一下了。</p>
 <p>创建 <code>seed.controller.ts</code> 文件，在其中添加对 service 的实际调用：</p>
-<pre><code class="lang-typescript">import { Controller, Get } from &#39;@nestjs/common&#39;;
-import { ArticleService } from &#39;../services/article.service&#39;;
+<pre><code class="lang-typescript">import { Controller, Get } from &#39;@nestjs/common&#39;
+import { ArticleService } from &#39;../services/article.service&#39;
 
 @Controller(&#39;/seed&#39;)
 export class SeedController {
@@ -61,26 +63,26 @@ export class SeedController {
     await this.articleService.create({
       title: &#39;Article 1&#39;,
       content: &#39;Content 1&#39;,
-    });
+    })
 
     await this.articleService.create({
       title: &#39;Article 2&#39;,
       content: &#39;Content 2&#39;,
-    });
+    })
 
     await this.articleService.create({
       title: &#39;Article 3&#39;,
       content: &#39;Content 3&#39;,
-    });
+    })
 
-    return await this.articleService.query();
+    return await this.articleService.query()
   }
 }
 </code></pre>
 <p>别忘了把 SeedController 添加到 AppModule 中：</p>
-<pre><code class="lang-typescript">import { Module } from &#39;@nestjs/common&#39;;
-import PrismaModule from &#39;./data/prisma.module&#39;;
-import { SeedController } from &#39;./controllers/seed.controller&#39;;
+<pre><code class="lang-typescript">import { Module } from &#39;@nestjs/common&#39;
+import PrismaModule from &#39;./data/prisma.module&#39;
+import { SeedController } from &#39;./controllers/seed.controller&#39;
 
 @Module({
   imports: [PrismaModule],
@@ -95,9 +97,9 @@ export class AppModule {}
 <p>首先是更改应用的端口号，Heroku 在部署这个应用时，会随机分配一个端口号，我们的应用需要使用这个端口号来启动，而这个端口号会通过环境变量的方式提供。</p>
 <p>修改 <code>src/main.ts</code>：</p>
 <pre><code class="lang-typescript">async function bootstrap() {
-    // ...
-  const PORT = process.env.PORT ?? 3000;
-  await app.listen(PORT);
+  // ...
+  const PORT = process.env.PORT ?? 3000
+  await app.listen(PORT)
 }
 </code></pre>
 <p>Heroku 在启动这个项目时，默认使用的是 <code>npm start</code> 命令，而在我们的项目中这一命令其实是开发环境下的启动，<code>npm run start:prod</code> 才是基于构建后代码的启动。因此，我们需要告诉 Heroku 使用这一 script 启动，通常云平台们都支持了项目内的配置文件，如 <code>vercel.json</code>、<code>netlify.toml</code> ，而 Heroku 的配置文件则要特殊一些，它的名字叫 <code>Procfile</code>，注意，没有文件扩展名。</p>
@@ -106,9 +108,9 @@ export class AppModule {}
 </code></pre>
 <p>还有最后一步，由于 Prisma 需要有一步 generate 命令，代码内才能访问到 Prisma Client，而在默认的构建过程中自然是不会有这一步的。因此，我们需要通过 <code>postinstall</code> 这个会在安装过程后执行的 npm script ，在其中调用 generate：</p>
 <pre><code class="lang-json">{
-   &quot;scripts&quot;: {
+  &quot;scripts&quot;: {
     &quot;postinstall&quot;: &quot;npm run prisma:gen&quot;
-  },
+  }
 }
 </code></pre>
 <p>你也可以在 <code>postbuild</code> 或别的步骤进行，只要确保在启动应用前执行了 prisma generate 即可。</p>
@@ -173,7 +175,7 @@ model Article {
 }
 </code></pre>
 <p>首先是 Service 层，我们在这里会从数据库取回数据然后进行返回，但一般我们不会直接丢个数据回去，而是会附带上状态码等信息一起返回。这里我们实现一个简单的版本：</p>
-<pre><code class="lang-typescript">import { MaybeNull } from &#39;../types&#39;;
+<pre><code class="lang-typescript">import { MaybeNull } from &#39;../types&#39;
 
 export enum StatusCode {
   RESOLVED = 10000,
@@ -184,44 +186,44 @@ export class ResponseWrapper&lt;TData = any&gt; {
   constructor(
     public statusCode: StatusCode,
     public data: TData,
-    public message?: string,
+    public message?: string
   ) {
-    this.statusCode = statusCode;
-    this.data = data;
+    this.statusCode = statusCode
+    this.data = data
     this.message =
-      message ?? statusCode === StatusCode.RESOLVED ? &#39;Success&#39; : &#39;Failed&#39;;
+      message ?? statusCode === StatusCode.RESOLVED ? &#39;Success&#39; : &#39;Failed&#39;
   }
 }
 </code></pre>
 <p>从简起见，我们不想每次使用这个类时都标记状态。因为我们总共就两种状态，所以可以提前准备好成功与失败的响应修饰：</p>
 <pre><code class="lang-typescript">export class ResolvedResponse&lt;TData = any&gt; extends ResponseWrapper {
   constructor(public data: TData, public message?: string) {
-    super(StatusCode.RESOLVED, data, message);
+    super(StatusCode.RESOLVED, data, message)
   }
 }
 
 export class RejectedResponse&lt;TData = any&gt; extends ResponseWrapper {
   constructor(public data: TData, public message?: string) {
-    super(StatusCode.REJECTED, data, message);
+    super(StatusCode.REJECTED, data, message)
   }
 }
 </code></pre>
 <p>成功时使用 ResolvedResponse，数据为空或出现异常时使用 RejectedResponse，你也可以进行更进一步的拆分，如让参数校验失败、数据为空、鉴权失败等等都有专用的 RejectedResponse。</p>
 <p>从创建开始，我们直接调用注入好的 Prisma Client 即可：</p>
-<pre><code class="lang-typescript">import { Injectable } from &#39;@nestjs/common&#39;;
-import { PrismaService } from &#39;../data/prisma.service&#39;;
+<pre><code class="lang-typescript">import { Injectable } from &#39;@nestjs/common&#39;
+import { PrismaService } from &#39;../data/prisma.service&#39;
 import {
   ResolvedResponse,
   RejectedResponse,
   ResponseUnion,
-} from &#39;../utils/response-wrapper.provider&#39;;
-import { Article, ArticleCreateInput, ArticleUpdateInput } from &#39;../types&#39;;
+} from &#39;../utils/response-wrapper.provider&#39;
+import { Article, ArticleCreateInput, ArticleUpdateInput } from &#39;../types&#39;
 
 @Injectable()
 export class ArticleService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createInput: ArticleCreateInput){
+  async create(createInput: ArticleCreateInput) {
     try {
       const res = await this.prisma.article.create({
         data: createInput,
@@ -229,11 +231,11 @@ export class ArticleService {
           category: true,
           tag: true,
         },
-      });
+      })
 
-      return new ResolvedResponse(res);
+      return new ResolvedResponse(res)
     } catch (error) {
-      return new RejectedResponse(null);
+      return new RejectedResponse(null)
     }
   }
 }
@@ -246,7 +248,7 @@ export class ArticleService {
 <p>为了解决这一问题，我们声明一个通用的响应类型：</p>
 <pre><code class="lang-typescript">export type ResponseUnion&lt;TData&gt; = Promise&lt;
   ResolvedResponse&lt;MaybeNull&lt;TData&gt;&gt; | RejectedResponse&lt;MaybeNull&lt;TData&gt;&gt;
-&gt;;
+&gt;
 </code></pre>
 <p>然后作为返回值类型使用：</p>
 <pre><code class="lang-typescript">@Injectable()
@@ -262,7 +264,7 @@ export class ArticleService {
   constructor(private prisma: PrismaService) {}
 
   async update(updateInput: ArticleUpdateInput): ResponseUnion&lt;Article&gt; {
-    const { id } = updateInput;
+    const { id } = updateInput
     try {
       const record = await this.prisma.article.findUnique({
         where: { id },
@@ -270,10 +272,10 @@ export class ArticleService {
           category: true,
           tag: true,
         },
-      });
+      })
 
       if (!record) {
-        return new RejectedResponse(null);
+        return new RejectedResponse(null)
       }
 
       const res = await this.prisma.article.update({
@@ -283,11 +285,11 @@ export class ArticleService {
           category: true,
           tag: true,
         },
-      });
+      })
 
-      return new ResolvedResponse(res);
+      return new ResolvedResponse(res)
     } catch (error) {
-      return new RejectedResponse(null);
+      return new RejectedResponse(null)
     }
   }
 }
@@ -301,7 +303,7 @@ export class ArticleService {
   constructor(private prisma: PrismaService) {}
 
   async queryRecords(
-    includeInvisible: boolean = false,
+    includeInvisible: boolean = false
   ): ResponseUnion&lt;Article[]&gt; {
     try {
       const res = await this.prisma.article.findMany({
@@ -314,11 +316,11 @@ export class ArticleService {
           category: true,
           tag: true,
         },
-      });
+      })
 
-      return new ResolvedResponse(res);
+      return new ResolvedResponse(res)
     } catch (error) {
-      return new RejectedResponse(null);
+      return new RejectedResponse(null)
     }
   }
 
@@ -330,10 +332,10 @@ export class ArticleService {
           category: true,
           tag: true,
         },
-      });
-      return new ResolvedResponse(res);
+      })
+      return new ResolvedResponse(res)
     } catch (error) {
-      return new RejectedResponse(null);
+      return new RejectedResponse(null)
     }
   }
 }
@@ -341,7 +343,7 @@ export class ArticleService {
 <p>在全量查询中，我们支持了通过 includeVisible 选项进行过滤，而在单条查询中则不会进行过滤。</p>
 <p>完成了 Service 后，Controller 其实就简单多了，我们通常会在这里进行鉴权、校验参数、限流拦截等操作，但现在我们只需要简单地调用 Service 即可。</p>
 <p>创建与更新比较类似，我们放在一起看：</p>
-<pre><code class="lang-typescript">export type MaybeArray&lt;T&gt; = T | T[];
+<pre><code class="lang-typescript">export type MaybeArray&lt;T&gt; = T | T[]
 
 @Controller(&#39;/article&#39;)
 export class ArticleController {
@@ -349,16 +351,16 @@ export class ArticleController {
 
   @Post(&#39;/create&#39;)
   async create(
-    @Body() createInput: ArticleCreateInput,
+    @Body() createInput: ArticleCreateInput
   ): ResponseUnion&lt;Article&gt; {
-    return await this.articleService.create(createInput);
+    return await this.articleService.create(createInput)
   }
 
   @Post(&#39;/update&#39;)
   async update(
-    @Body() updateInput: ArticleUpdateInput,
+    @Body() updateInput: ArticleUpdateInput
   ): ResponseUnion&lt;Article&gt; {
-    return await this.articleService.update(updateInput);
+    return await this.articleService.update(updateInput)
   }
 }
 </code></pre>
@@ -370,14 +372,14 @@ export class ArticleController {
 
   @Get(&#39;/&#39;)
   async query(): ResponseUnion&lt;Article[]&gt; {
-    return await this.articleService.queryRecords();
+    return await this.articleService.queryRecords()
   }
 
   @Get(&#39;/:id&#39;)
   async queryById(
-    @Param(&#39;id&#39;, ParseIntPipe) id: number,
+    @Param(&#39;id&#39;, ParseIntPipe) id: number
   ): ResponseUnion&lt;MaybeArray&lt;Article&gt;&gt; {
-    return await this.articleService.querySingleRecord(id);
+    return await this.articleService.querySingleRecord(id)
   }
 }
 </code></pre>

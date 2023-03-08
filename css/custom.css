@@ -26,29 +26,16 @@
 /* 日间模式不生效 */
 [data-theme='light'] #site-name,
 [data-theme='light'] #site-title {
-  background-image: linear-gradient(#fff, #c21a90);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent; /*需要文字透明*/
-  -webkit-text-stroke: 1px #333;
+  color: #a83899 !important;
 }
 [data-theme='light'] #site-subtitle {
-  background-image: linear-gradient(#fff, #c21a90);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent; /*需要文字透明*/
-  -webkit-text-stroke: 1px #333;
+  color: #a83899 !important;
 }
 [data-theme='light'] #post-info {
   animation: none;
 }
 [data-theme='light'] .site-page {
-  background-image: linear-gradient(#fff, #c21a90);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent; /*需要文字透明*/
-
-  -webkit-text-stroke: 1px #333;
+  color: #a83899 !important;
 }
 
 /* 夜间模式生效 */
@@ -555,7 +542,7 @@ i:hover {
 
 /* ip地址获取广告 */
 #welcome-info {
-  background: linear-gradient(45deg, #b9f4f3, #e3fbf9);
+  background: #ffffff;
   border-radius: 18px;
   padding: 8px;
 }

@@ -1,4 +1,6 @@
-<p>关于 ESLint 是什么，我想应该没有过多介绍的必要，即使你没有主动了解过它，也一定被动接触过。它带给你的印象并不一定很好，有可能是满屏的红色波浪线，也可能是成千上万条的报错输出。但你可能也很享受经过 ESLint 检查与格式化后工工整整的代码，那简直叫一个赏心悦目。</p>
+<hr>
+<p>title: 22.让 ESLint 来约束你的 TypeScript 代码：配置与规则集介绍<br>date: 2023-02-16 16:29:28<br>tags: TypeScript<br>updated: 更新日期<br>cover:<br>description: TS全面进阶指南<br>categories: TS全面进阶指南<br>highlight_shrink: false</p>
+<h2 id="index-false"><a href="#index-false" class="headerlink" title="index: false"></a>index: false</h2><p>关于 ESLint 是什么，我想应该没有过多介绍的必要，即使你没有主动了解过它，也一定被动接触过。它带给你的印象并不一定很好，有可能是满屏的红色波浪线，也可能是成千上万条的报错输出。但你可能也很享受经过 ESLint 检查与格式化后工工整整的代码，那简直叫一个赏心悦目。</p>
 <p>对于 ESLint ，我认为它就是现代前端工程必备的一样工具，无论是简单的寥寥几行配置，还是精心挑选了最适合自己或者团队风格的规则集，它都是不可缺少的一环。ESLint 的作用其实可以划分为两个部分：<strong>风格统一</strong>与<strong>代码优化</strong>。</p>
 <p>风格统一不必多说，单双引号、缩进、逗号等编码风格的统一十分有必要，看到一会单引号一会双引号的代码，很难不怀疑作者的代码水平。而代码优化则就是一个比较宽泛的概念了，它可以指<strong>让你的代码更简洁</strong>，比如不允许未使用的变量，也可以指<strong>让你的代码更严谨</strong>，比如不允许未声明的全局变量。很多人可能存在一个误区，即认为 ESLint 只会要求减少代码，但实际上在很多场景，尤其是在 TypeScript 场景下，很多时候 ESLint 反而会要求你写<strong>更多的代码</strong>，如要求你为函数的返回值显式声明类型等等。</p>
 <p>实际上，这也是 Lint 工具的核心功能，我们后面会介绍的 Prettier 也是（但 Prettier 只关心风格统一部分），我们希望通过一种<strong>自动化的、存在确定规范</strong>的方式，来提升项目中的代码质量。接下来，我们会了解如何配置 ESLint，如何进一步提升工程的约束能力，以及 TypeScript ESLint 下的规则集介绍。</p>
@@ -21,14 +23,12 @@ pnpm i @typescript-eslint/eslint-plugin @typescript-eslint/parser --save-dev
 <pre><code class="lang-typescript">module.exports = {
   root: true,
   parser: &#39;@typescript-eslint/parser&#39;,
-  plugins: [
-    &#39;@typescript-eslint&#39;,
-  ],
+  plugins: [&#39;@typescript-eslint&#39;],
   extends: [
     // ...其他已有的配置
     &#39;plugin:@typescript-eslint/recommended&#39;,
   ],
-};
+}
 </code></pre>
 <p>由于部分 TS ESLint 的规则和 ESLint 中基础的规则有冲突，我们需要修改配置文件的规则，最终的基本示例如下：</p>
 <pre><code class="lang-js">module.exports = {
@@ -54,7 +54,7 @@ pnpm i @typescript-eslint/eslint-plugin @typescript-eslint/parser --save-dev
       version: &#39;detect&#39;,
     },
   },
-};
+}
 </code></pre>
 <blockquote>
 <p>Indent 这条规则有一个需要注意的地方，其配置项还可以是 <code>&#39;tab&#39;</code> <code>&#39;space&#39;</code> 等，如果你把上面的 2 改成 <code>&#39;tab&#39;</code>，大概率项目中会出现巨量报错，如 <em>Expected indentation of 1 tab but found 2 spaces</em>。这是因为 Tab 和 Space 并不是等价的，也和你的编辑器配置有关。而我们这里的 2 ，其具体意义为 2 spaces。</p>
@@ -71,7 +71,7 @@ pnpm i @typescript-eslint/eslint-plugin @typescript-eslint/parser --save-dev
   &quot;scripts&quot;: {
     &quot;eslint&quot;: &quot;eslint src/** --ext .js, .jsx, .ts, .tsx --cache&quot;,
     &quot;eslint:fix&quot;: &quot;npm run eslint -- --fix&quot;
-  },
+  }
 }
 </code></pre>
 <p><code>npm run eslint</code> 即是仅检查，而 <code>eslint:fix</code> 则是检查同时尽可能修复错误。这样我们就完成了基础的 TypeScript ESLint 配置。但在实际项目中，光靠 ESLint 可没法确保代码质量。</p>
@@ -94,19 +94,19 @@ pnpm install prettier eslint-config-prettier --save-dev
   // 使用单引号
   singleQuote: true,
   // 在对象属性中，仅在必要时才使用引号，如 &quot;prop-foo&quot;
-  quoteProps: &quot;as-needed&quot;,
+  quoteProps: &#39;as-needed&#39;,
   // 在 jsx 中使用双引号
   jsxSingleQuote: false,
   // 使用 es5 风格的尾缀逗号，即数组和对象的最后一项成员后也需要逗号
-  trailingComma: &quot;es5&quot;,
+  trailingComma: &#39;es5&#39;,
   // 大括号内首尾需要空格
   bracketSpacing: true,
   // HTML 标签（以及 JSX，Vue 模板等）的反尖括号 &gt; 需要换行
   bracketSameLine: false,
   // 箭头函数仅有一个参数时也需要括号，如 (arg) =&gt; {}
   // 使用 crlf 作为换行符
-  endOfLine: &quot;crlf&quot;,
-};
+  endOfLine: &#39;crlf&#39;,
+}
 </code></pre>
 <p>关于更多配置，参见 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fprettier.io%2Fdocs%2Fen%2Foptions.html">Prettier 配置</a>。</p>
 <p>同时为了避免和 ESLint 冲突，我们还需要通过 <code>eslint-config-prettier</code> 禁用掉部分 ESLint 规则，修改 ESLint 配置：</p>
@@ -116,7 +116,7 @@ pnpm install prettier eslint-config-prettier --save-dev
     &#39;plugin:@typescript-eslint/recommended&#39;,
     &#39;prettier&#39;, // 新增这一行
   ],
-};
+}
 </code></pre>
 <p>创建忽略文件 .prettierignore：</p>
 <pre><code class="lang-init">build
@@ -137,7 +137,7 @@ out
     &quot;prettier:fix&quot;: &quot;prettier --write .&quot;,
     &quot;lint&quot;: &quot;npm run eslint &amp;&amp; npm run prettier&quot;,
     &quot;lint:fix&quot;: &quot;npm run eslint:fix &amp;&amp; npm run prettier:fix&quot;
-  },
+  }
 }
 </code></pre>
 <p>类似的，<code>npm run prettier</code> 是仅检查，而 <code>prettier:fix</code> 才是进入修改。同时我们还增加了 <code>lint</code> 和 <code>lint:fix</code> 来一次性执行两个工具。</p>
@@ -175,7 +175,7 @@ pnpm install --save-dev lint-staged
     &quot;*.{json,md,html,css,scss,sass,less,styl}&quot;: [
       &quot;prettier --write --list-different&quot;
     ]
-  },
+  }
 }
 </code></pre>
 <p>这段配置的大意是，对于暂存区的核心代码文件，先使用 ESLint 格式化，再使用 Prettier 格式化，而对于其他文件，统一使用 Prettier 进行格式化。现在你可以试着提交一次了：</p>
@@ -207,7 +207,7 @@ pnpm i eslint-config-ts-ruleset --save--dev
   rules: {
     &#39;react/react-in-jsx-scope&#39;: &#39;off&#39;,
   },
-};
+}
 </code></pre>
 <p>TypeScript ESLint 规则主要由四个部分组成：</p>
 <ul>
@@ -221,11 +221,11 @@ pnpm i eslint-config-ts-ruleset --save--dev
 <p>这是为什么呢？对于这种效果完全一致仅仅在使用上有差异的语法，我们需要的只是确定一个规范，然后在所有地方使用这一规范。实际上，这一类规则（还有后面的类型断言语法）就类似于单引号 / 双引号，加不加分号这种基础规则，如果你不能接受上一行代码单引号这一行代码双引号，那么也没理由能接受这里一个 <code>Array&lt;number&gt;</code> 那里一个 <code>number[]</code>。</p>
 <h5 id="await-thenable"><a href="#await-thenable" class="headerlink" title="await-thenable"></a>await-thenable</h5><p>只允许对异步函数、Promise、PromiseLike 使用 await 调用（也就是实现了 Thenable 接口，存在 then 方法的对象），可以避免无意义的 await 调用，同时还能帮助你发现某个异步函数忘记加 async 了。</p>
 <h5 id="consistent-type-assertions"><a href="#consistent-type-assertions" class="headerlink" title="consistent-type-assertions"></a>consistent-type-assertions</h5><p>TypeScript 支持通过 <code>as</code> 与 <code>&lt;&gt;</code> 两种不同的语法进行类型断言，如：</p>
-<pre><code class="lang-typescript">const foo = {} as Foo;
-const foo = &lt;Foo&gt;{};
+<pre><code class="lang-typescript">const foo = {} as Foo
+const foo = &lt;Foo&gt;{}
 
-const foo = &lt;const&gt;[1, 2]; // 常量断言
-const foo = [1, 2, 3] as const;
+const foo = &lt;const&gt;[1, 2] // 常量断言
+const foo = [1, 2, 3] as const
 </code></pre>
 <p>这一规则约束使用统一的类型断言语法，我一般在 Tsx 中使用 <code>as</code> ，在其他时候尽可能的使用 <code>&lt;&gt;</code>，原因则是 <code>&lt;&gt;</code> 更加简洁。</p>
 <p>类似于 array-type，这条规则也是主要做语法统一，但需要注意的是在 Tsx 项目中使用 <code>&lt;&gt;</code> 断言会导致报错，因为此时无法像泛型那样通过 <code>&lt;T extends Foo&gt;</code> 来显式告知编译器这里是泛型语法而非一个 JSX 组件。</p>
@@ -233,10 +233,10 @@ const foo = [1, 2, 3] as const;
 <pre><code class="lang-typescript">interface IFoo {}
 
 type Partial&lt;T&gt; = {
-    [P in keyof T]?: T[P];
-};
+  [P in keyof T]?: T[P]
+}
 
-type LiteralBool = &quot;true&quot; | &quot;false&quot;;
+type LiteralBool = &#39;true&#39; | &#39;false&#39;
 </code></pre>
 <p>原因主要有这么几点。</p>
 <ul>
@@ -262,12 +262,12 @@ type LiteralBool = &quot;true&quot; | &quot;false&quot;;
 <h5 id="prefer-for-of"><a href="#prefer-for-of" class="headerlink" title="prefer-for-of"></a>prefer-for-of</h5><p>在你使用 for 循环遍历数组时，如果索引仅仅用来访问数组成员，则应该替换为 <code>for...of</code>：</p>
 <pre><code class="lang-typescript">// ×
 for (let i = 0; i &lt; arr.length; i++) {
-  console.log(arr[i]);
+  console.log(arr[i])
 }
 
 // √
 for (const x of arr) {
-  console.log(x);
+  console.log(x)
 }
 </code></pre>
 <p>如果不是为了兼容性考虑，在仅访问索引的情况下，我们的确没有必要使用 for 循环，而应当使用语法更加简单的 <code>for...of</code>。</p>
@@ -275,45 +275,45 @@ for (const x of arr) {
 <p>在 TypeScript 与 ECMAScript 纠葛一节中，我们还会详细介绍可选链与空值合并这两个语法。</p>
 <h5 id="consistent-type-imports"><a href="#consistent-type-imports" class="headerlink" title="consistent-type-imports"></a>consistent-type-imports</h5><p>约束使用 <code>import type {}</code> 进行类型的导入，如：</p>
 <pre><code class="lang-typescript">// √
-import type { CompilerOptions } from &#39;typescript&#39;;
+import type { CompilerOptions } from &#39;typescript&#39;
 
 // x
-import { CompilerOptions } from &#39;typescript&#39;;
+import { CompilerOptions } from &#39;typescript&#39;
 </code></pre>
 <p>就像我们在类型声明那一节所了解的，<code>import type</code> 能够帮助你更好地组织你的项目头部的导入结构。值导入与类型导入在 TypeScript 中使用不同的空间来存放，因此无须担心循环依赖（所以你可以<strong>父组件导入子组件，子组件导入定义在父组件中的类型</strong>这样）。</p>
 <p>类似的，我们也可以通过 <code>consistent-type-exports</code> 规则，来约束只能使用 <code>export type</code> 导出类型：</p>
-<pre><code class="lang-typescript">type Foo = string;
+<pre><code class="lang-typescript">type Foo = string
 
-export type { Foo };
+export type { Foo }
 </code></pre>
 <p>一个简单的、良好组织了导入语句的示例：</p>
-<pre><code class="lang-typescript">import { useEffect } from &#39;react&#39;;
+<pre><code class="lang-typescript">import { useEffect } from &#39;react&#39;
 
-import { Button, Dialog } from &#39;ui&#39;;
-import { ChildComp } from &#39;./child&#39;;
+import { Button, Dialog } from &#39;ui&#39;
+import { ChildComp } from &#39;./child&#39;
 
 import { store } from &#39;@/store&#39;
-import { useCookie } from &#39;@/hooks/useCookie&#39;;
-import { SOME_CONSTANTS } from &#39;@/utils/constants&#39;;
+import { useCookie } from &#39;@/hooks/useCookie&#39;
+import { SOME_CONSTANTS } from &#39;@/utils/constants&#39;
 
-import type { Foo } from &#39;@/typings/foo&#39;;
-import type { Shared } from &#39;@/typings/shared&#39;;
+import type { Foo } from &#39;@/typings/foo&#39;
+import type { Shared } from &#39;@/typings/shared&#39;
 
-import styles from &#39;./index.module.scss&#39;;
+import styles from &#39;./index.module.scss&#39;
 </code></pre>
 <h5 id="non-nullable-type-assertion-style"><a href="#non-nullable-type-assertion-style" class="headerlink" title="non-nullable-type-assertion-style"></a>non-nullable-type-assertion-style</h5><p>此规则要求在类型断言仅起到去空值作用，如将 <code>string | undefined</code> 类型断言为 <code>string</code>时，将其替换为非空断言 <code>!</code></p>
-<pre><code class="lang-typescript">const foo:string | undefined = &quot;foo&quot;;
+<pre><code class="lang-typescript">const foo: string | undefined = &#39;foo&#39;
 
 // √
-foo!;
+foo!
 // x
-foo as string;
+foo as string
 </code></pre>
 <p>非空断言的目的就是提供快速去除类型中 null、undefined 值的类型断言能力，这一规则的本质是检查<strong>经过断言后的类型子集是否仅剔除了空值部分</strong>。因此，无需担心对于多种有实际意义的类型分支的联合类型误判。</p>
 <h5 id="promise-function-async"><a href="#promise-function-async" class="headerlink" title="promise-function-async"></a>promise-function-async</h5><p>返回 Promise 的函数必须被标记为 async。当你的函数显式返回了一个 Promise，就说明它应当是一个异步过程，就应当被标记为 async。</p>
 <h5 id="prefer-literal-enum-member"><a href="#prefer-literal-enum-member" class="headerlink" title="prefer-literal-enum-member"></a>prefer-literal-enum-member</h5><p>对于枚举成员值，只允许使用普通字符串、数字、null、正则，而不允许变量复制、模板字符串等需要计算的操作。虽然 TypeScript 是允许使用各种合法表达式作为枚举成员的，但由于枚举的编译结果拥有自己的作用域，因此可能导致错误的赋值，如：</p>
-<pre><code class="lang-typescript">const imOutside = 2;
-const b = 2;
+<pre><code class="lang-typescript">const imOutside = 2
+const b = 2
 enum Foo {
   outer = imOutside,
   a = 1,
@@ -322,22 +322,22 @@ enum Foo {
 }
 </code></pre>
 <p>这里 <code>c == Foo.b == Foo.c == 1</code>，还是 <code>c == b == 2</code> ? 观察下编译结果：</p>
-<pre><code class="lang-typescript">&quot;use strict&quot;;
-const imOutside = 2;
-const b = 2;
-var Foo;
-(function (Foo) {
-    Foo[Foo[&quot;outer&quot;] = imOutside] = &quot;outer&quot;;
-    Foo[Foo[&quot;a&quot;] = 1] = &quot;a&quot;;
-    Foo[Foo[&quot;b&quot;] = 1] = &quot;b&quot;;
-    Foo[Foo[&quot;c&quot;] = 1] = &quot;c&quot;;
-})(Foo || (Foo = {}));
+<pre><code class="lang-typescript">&#39;use strict&#39;
+const imOutside = 2
+const b = 2
+var Foo
+;(function (Foo) {
+  Foo[(Foo[&#39;outer&#39;] = imOutside)] = &#39;outer&#39;
+  Foo[(Foo[&#39;a&#39;] = 1)] = &#39;a&#39;
+  Foo[(Foo[&#39;b&#39;] = 1)] = &#39;b&#39;
+  Foo[(Foo[&#39;c&#39;] = 1)] = &#39;c&#39;
+})(Foo || (Foo = {}))
 </code></pre>
 <p>编译结果也说明了，枚举对象内部也是有作用域的，优先级当然比外部作用域同名变量更高。</p>
 <h5 id="prefer-as-const"><a href="#prefer-as-const" class="headerlink" title="prefer-as-const"></a>prefer-as-const</h5><p>对于常量断言，使用 as const 而不是 <code>&lt;const&gt;</code>，这一点类似于上面约束类型断言语法的 consistent-type-assertions 规则。</p>
 <h4 id="类型约束"><a href="#类型约束" class="headerlink" title="类型约束"></a>类型约束</h4><h5 id="no-unnecessary-type-arguments"><a href="#no-unnecessary-type-arguments" class="headerlink" title="no-unnecessary-type-arguments"></a>no-unnecessary-type-arguments</h5><p>不允许与默认值一致的泛型参数，如：</p>
 <pre><code class="lang-typescript">function foo&lt;T = number&gt;() {}
-foo&lt;number&gt;();
+foo&lt;number&gt;()
 </code></pre>
 <p>与默认值一致的泛型参数是没有意义的，因为我们直接把鼠标悬浮上去就能看到实际应用的泛型类型。</p>
 <h4 id="能力约束"><a href="#能力约束" class="headerlink" title="能力约束"></a>能力约束</h4><h5 id="ban-ts-comment"><a href="#ban-ts-comment" class="headerlink" title="ban-ts-comment"></a>ban-ts-comment</h5><p>禁止 <code>@ts-</code> 指令的使用，或者允许其在提供了说明的情况下被使用，如：</p>
@@ -351,7 +351,7 @@ foo&lt;number&gt;();
 <h5 id="no-extra-non-null-assertion"><a href="#no-extra-non-null-assertion" class="headerlink" title="no-extra-non-null-assertion"></a>no-extra-non-null-assertion</h5><p>不允许额外的重复非空断言：</p>
 <pre><code class="lang-typescript">// x
 function foo(bar: number | undefined) {
-  const bar: number = bar!!!;
+  const bar: number = bar!!!
 }
 </code></pre>
 <p>额外的非空断言是无意义的，只要一次非空断言就能移除掉 null 与 undefined 类型了。</p>
@@ -363,12 +363,12 @@ function foo(bar: number | undefined) {
 <h3 id="较为严格组"><a href="#较为严格组" class="headerlink" title="较为严格组"></a>较为严格组</h3><h4 id="语法统一约束-1"><a href="#语法统一约束-1" class="headerlink" title="语法统一约束"></a>语法统一约束</h4><h5 id="method-signature-style"><a href="#method-signature-style" class="headerlink" title="method-signature-style"></a>method-signature-style</h5><p>方法签名的声明方式有 method 与 property 两种，区别如下：</p>
 <pre><code class="lang-typescript">// method
 interface T1 {
-  func(arg: string): number;
+  func(arg: string): number
 }
 
 // property
 interface T2 {
-  func: (arg: string) =&gt; number;
+  func: (arg: string) =&gt; number
 }
 </code></pre>
 <p>此规则将声明方式进行约束，推荐使用第二种的 property 方式。</p>
@@ -391,10 +391,10 @@ interface Foo extends Bar {}
 <h5 id="no-explicit-any"><a href="#no-explicit-any" class="headerlink" title="no-explicit-any"></a>no-explicit-any</h5><p>不允许显式的 any 类型。</p>
 <p>此前我们已经了解过 any 类型的弊端，甚至 TypeScript 专门引入了 unknown 类型来尝试堵上一些口子。然而即使这样，很多场景下考虑到成本，我们还是会使用 any 。因此实际上这条规则只被设置为 warn 等级，真的做到一个 any 不用，或是全部替换成 unknown + 类型断言，都是成本极高的，需要团队所有人都有着严格的代码质量意识。如果你真的想这么做，我推荐配合 tsconfig 的 <code>--noImplicitAny</code> 来检查隐式 any ，来尽可能抹除代码中 的 any。</p>
 <h5 id="no-inferrable-types"><a href="#no-inferrable-types" class="headerlink" title="no-inferrable-types"></a>no-inferrable-types</h5><p>不允许不必要的类型标注，但可配置为允许类的属性成员、函数的属性成员进行额外标注。</p>
-<pre><code class="lang-typescript">const foo: string = &quot;linbudu&quot;;
+<pre><code class="lang-typescript">const foo: string = &#39;linbudu&#39;
 
 class Foo {
-    prop1: string = &quot;linbudu&quot;;
+  prop1: string = &#39;linbudu&#39;
 }
 
 function foo(a: number = 5, b: boolean = true) {
@@ -408,7 +408,7 @@ function foo(a: number = 5, b: boolean = true) {
 <p>通过显式指定返回值类型，我们可以直观区分函数的功能，如是否携带副作用，以及是否有返回值等，同时显式指定的函数返回值类型也能在一定程度上提升 TypeScript Compiler 性能。</p>
 <p>在这一点上可能会有比较大的分歧，认为它成本太高。而我认为首先 TypeScript 强大的类型推导能力是能够直接为你推导出最终返回值类型的，你完全可以直接复制上去。其次，显式标注返回值类型也能够通过上下文类型的能力（即实际 return 的值类型和你自己标注的返回值类型是否一致），帮助你确保最终返回的类型一定是你预期的那个类型。</p>
 <h4 id="能力约束-1"><a href="#能力约束-1" class="headerlink" title="能力约束"></a>能力约束</h4><h5 id="no-unnecessary-boolean-literal-compare"><a href="#no-unnecessary-boolean-literal-compare" class="headerlink" title="no-unnecessary-boolean-literal-compare"></a>no-unnecessary-boolean-literal-compare</h5><p>不允许对布尔类型变量的 === 比较，如：</p>
-<pre><code class="lang-typescript">declare const someCondition: boolean;
+<pre><code class="lang-typescript">declare const someCondition: boolean
 if (someCondition === true) {
 }
 </code></pre>
@@ -416,64 +416,64 @@ if (someCondition === true) {
 <h5 id="no-throw-literal"><a href="#no-throw-literal" class="headerlink" title="no-throw-literal"></a>no-throw-literal</h5><p>不允许直接 throw 一个字符串如：<code>throw &#39;err&#39;</code>，只能抛出 Error 或基于 Error 派生类的实例，如：<code>throw new Error(&#39;Oops!&#39;)</code>。</p>
 <p>抛出的 Error 实例能够自动的收集调用栈信息，同时借助 <strong><a href="https://link.juejin.cn/?target=http%3A%2F%2Flink.zhihu.com%2F%3Ftarget%3Dhttps%3A%2F%2Fgithub.com%2Ftc39%2Fproposal-error-cause">proposal-error-cause</a></strong> 提案，还能够跨越调用栈来附加错误原因传递上下文信息。</p>
 <h5 id="switch-exhaustiveness-check"><a href="#switch-exhaustiveness-check" class="headerlink" title="switch-exhaustiveness-check"></a>switch-exhaustiveness-check</h5><p>switch 的判定变量为联合类型时，其每一个类型分支都需要被处理。如：</p>
-<pre><code class="lang-typescript">type PossibleTypes = &#39;linbudu&#39; | &#39;qiongxin&#39; | &#39;developer&#39;;
+<pre><code class="lang-typescript">type PossibleTypes = &#39;linbudu&#39; | &#39;qiongxin&#39; | &#39;developer&#39;
 
-let value: PossibleTypes;
-let result = 0;
+let value: PossibleTypes
+let result = 0
 
 switch (value) {
   case &#39;linbudu&#39;: {
-    result = 1;
-    break;
+    result = 1
+    break
   }
   case &#39;qiongxin&#39;: {
-    result = 2;
-    break;
+    result = 2
+    break
   }
   case &#39;developer&#39;: {
-    result = 3;
-    break;
+    result = 3
+    break
   }
 }
 </code></pre>
 <p>联合类型变量中每一条类型分支可能都需要特殊的处理逻辑，此规则可以避免你新增了一个类型分支却没有为它分配对应的处理逻辑。</p>
 <p>在内置类型一节，我们还了解了通过 TypeScript 中的 never 类型来实现编译时的检验：</p>
-<pre><code class="lang-typescript">const strOrNumOrBool: string | number | boolean = false;
+<pre><code class="lang-typescript">const strOrNumOrBool: string | number | boolean = false
 
-if (typeof strOrNumOrBool === &quot;string&quot;) {
-  console.log(&quot;str!&quot;);
-} else if (typeof strOrNumOrBool === &quot;number&quot;) {
-  console.log(&quot;num!&quot;);
-} else if (typeof strOrNumOrBool === &quot;boolean&quot;) {
-  console.log(&quot;bool!&quot;);
+if (typeof strOrNumOrBool === &#39;string&#39;) {
+  console.log(&#39;str!&#39;)
+} else if (typeof strOrNumOrBool === &#39;number&#39;) {
+  console.log(&#39;num!&#39;)
+} else if (typeof strOrNumOrBool === &#39;boolean&#39;) {
+  console.log(&#39;bool!&#39;)
 } else {
-  const _exhaustiveCheck: never = strOrNumOrBool;
-  throw new Error(`Unknown input type: ${_exhaustiveCheck}`);
+  const _exhaustiveCheck: never = strOrNumOrBool
+  throw new Error(`Unknown input type: ${_exhaustiveCheck}`)
 }
 </code></pre>
 <h5 id="restrict-template-expressions"><a href="#restrict-template-expressions" class="headerlink" title="restrict-template-expressions"></a>restrict-template-expressions</h5><p>模板字符串中的计算表达式其返回值必须是字符串，此规则可以被配置为允许数字、布尔值、可能为 null 的值以及正则表达式，或者你也可以允许任意的值，但这样这条规则就形同虚设了。</p>
 <p>在模板表达式中，非字符串与数字以外的值很容易带来潜在的问题，如：</p>
-<pre><code class="lang-typescript">const arr = [1, 2, 3];
-const obj = { name: &#39;linbudu&#39; };
+<pre><code class="lang-typescript">const arr = [1, 2, 3]
+const obj = { name: &#39;linbudu&#39; }
 
 // &#39;arr: 1,2,3&#39;
-const str1 = `arr: ${arr}`;
+const str1 = `arr: ${arr}`
 // &#39;obj: [object Object]&#39;
-const str2 = `obj: ${obj}`;
+const str2 = `obj: ${obj}`
 </code></pre>
 <p>无论哪种情况都不会是你想看到的。推荐在规则配置中仅开启 <code>allowNumber</code> 来允许数字，而禁止掉其他的类型，你需要确保在把其他类型变量填入模板插槽中时，进行一次具有实际逻辑的转化。</p>
 <h5 id="prefer-reduce-type-parameter"><a href="#prefer-reduce-type-parameter" class="headerlink" title="prefer-reduce-type-parameter"></a>prefer-reduce-type-parameter</h5><p>我们在泛型一节中曾经介绍过数组 reduce 方法的各种重载，比如下面这种：</p>
-<pre><code class="lang-typescript">const arr: number[] = [1, 2, 3];
+<pre><code class="lang-typescript">const arr: number[] = [1, 2, 3]
 
 // 报错：不能将 number 类型的值赋值给 never 类型
 const result = arr.reduce((prev, curr, idx, arr) =&gt; {
   return [...prev, curr]
-}, []);
+}, [])
 </code></pre>
 <p>虽然我们知道 result 最终的结果会仍然是 <code>number[]</code> 类型，但这里仍然会有类型报错，原因就在于这里 reduce 通过 <code>[]</code> 进行类型推导，得到了一个 <code>never[]</code> 类型，要解决也很简单，只要给 reduce 显式传入泛型参数即可：</p>
 <pre><code class="lang-typescript">const result = arr.reduce&lt;number[]&gt;((prev, curr, idx, arr) =&gt; {
   return [...prev, curr]
-}, []);
+}, [])
 </code></pre>
 <p>这一规则就是为了确保在所有情况下你都显式为 reduce 调用传入了泛型，这样一来你就能自己确定它最终的返回值类型，而不是依赖类型推导了。</p>
 <h5 id="triple-slash-reference"><a href="#triple-slash-reference" class="headerlink" title="triple-slash-reference"></a>triple-slash-reference</h5><p>这一规则的目的在于禁止你使用三斜线指令，而是使用 import 来进行类型的导入。正如我们上一节所了解的那样：</p>
@@ -481,7 +481,7 @@ const result = arr.reduce((prev, curr, idx, arr) =&gt; {
 /// &lt;reference types=&quot;vite/client&quot; /&gt;
 
 // √ 使用 import type 来声明对这个声明文件的依赖
-import type * as ViteClientEnv from &#39;vite/client&#39;;
+import type * as ViteClientEnv from &#39;vite/client&#39;
 </code></pre>
 <h2 id="总结与预告"><a href="#总结与预告" class="headerlink" title="总结与预告"></a>总结与预告</h2><p>在这一节，我们学习了 TypeScript 下的 ESLint 配置，以及为了实现更好约束引入的 Prettier 与 Git Hooks。实际上，它们就是你开始提升自己代码质量的第一步，也是团队协作开发下的基础要求之一。除了如何配置，我们还了解了一批推荐使用的 TypeScript ESLint 规则，明白了它们的功能与意义。</p>
 <p>在下一节，我们会在工程实践的道路上更进一步，了解一批基本涵盖了整个 TypeScript 项目开发周期的工具库，说不定就有你刚好在找的那个。</p>

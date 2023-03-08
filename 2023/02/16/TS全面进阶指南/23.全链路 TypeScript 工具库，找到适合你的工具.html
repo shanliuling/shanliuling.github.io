@@ -1,4 +1,6 @@
-<p>在前面两节，我们了解了 TypeScript 在 React 与 ESLint 中的集成，而在实际项目开发时，我们还会接触许多与 TypeScript 相关的工具。如果按照作用场景来进行划分，这些工具大致可以划分为开发、校验、构建、类型四类。在这一节我们将介绍一批 TypeScript 工具库，讲解它们的基本使用，你可以在这里查找是否有符合你需求的工具。</p>
+<hr>
+<p>title: 23.全链路 TypeScript 工具库，找到适合你的工具<br>date: 2023-02-16 16:29:28<br>tags: TypeScript<br>updated: 更新日期<br>cover:<br>description: TS全面进阶指南<br>categories: TS全面进阶指南<br>highlight_shrink: false</p>
+<h2 id="index-false"><a href="#index-false" class="headerlink" title="index: false"></a>index: false</h2><p>在前面两节，我们了解了 TypeScript 在 React 与 ESLint 中的集成，而在实际项目开发时，我们还会接触许多与 TypeScript 相关的工具。如果按照作用场景来进行划分，这些工具大致可以划分为开发、校验、构建、类型四类。在这一节我们将介绍一批 TypeScript 工具库，讲解它们的基本使用，你可以在这里查找是否有符合你需求的工具。</p>
 <p>本节的定位类似于 GitHub 上的 awesome-xxx 系列，我们更多是在简单介绍工具的作用与使用场景，不会有深入的讲解与分析。同时，本节的内容会持续更新，如果你还使用过其他好用的工具库，欢迎在评论区留言，我会随着更新不断收录更多的工具库。</p>
 <h2 id="开发阶段"><a href="#开发阶段" class="headerlink" title="开发阶段"></a>开发阶段</h2><p>这一部分的工具主要在项目开发阶段使用。</p>
 <h3 id="项目开发"><a href="#项目开发" class="headerlink" title="项目开发"></a>项目开发</h3><ul>
@@ -25,13 +27,13 @@ tsc-watch --onFailure &quot;echo &#39;Beep! Compilation Failed&#39;&quot;
 <h3 id="代码生成"><a href="#代码生成" class="headerlink" title="代码生成"></a>代码生成</h3><ul>
 <li><p><a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2FYousefED%2Ftypescript-json-schema">typescript-json-schema</a>，从 TypeScript 代码生成 JSON Schema，如以下代码：</p>
 <pre><code class="lang-typescript">export interface Shape {
-    /**
-     * The size of the shape.
-     *
-     * @minimum 0
-     * @TJS-type integer
-     */
-    size: number;
+  /**
+   * The size of the shape.
+   *
+   * @minimum 0
+   * @TJS-type integer
+   */
+  size: number
 }
 </code></pre>
 <p>会生成以下的 JSON Schema：</p>
@@ -79,13 +81,13 @@ tsc-watch --onFailure &quot;echo &#39;Beep! Compilation Failed&#39;&quot;
 }
 </code></pre>
 <pre><code class="lang-typescript">export interface ExampleSchema {
-  firstName: string;
-  lastName: string;
+  firstName: string
+  lastName: string
   /**
    * Age in years
    */
-  age?: number;
-  hairColor?: &quot;black&quot; | &quot;brown&quot; | &quot;blue&quot;;
+  age?: number
+  hairColor?: &#39;black&#39; | &#39;brown&#39; | &#39;blue&#39;
 }
 </code></pre>
 </li>
@@ -104,16 +106,16 @@ tsc-watch --onFailure &quot;echo &#39;Beep! Compilation Failed&#39;&quot;
 <h2 id="校验阶段"><a href="#校验阶段" class="headerlink" title="校验阶段"></a>校验阶段</h2><p>以下这些工具通常用于在项目逻辑中进行具有实际逻辑的校验（而不同于 tsd 仅在类型层面）。</p>
 <h3 id="逻辑校验"><a href="#逻辑校验" class="headerlink" title="逻辑校验"></a>逻辑校验</h3><ul>
 <li><p><a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fcolinhacks%2Fzod">zod</a>，核心优势在于与 TypeScript 的集成，如能从 Schema 中直接提取出类型：</p>
-<pre><code class="lang-typescript">import { z } from &quot;zod&quot;;
+<pre><code class="lang-typescript">import { z } from &#39;zod&#39;
 
 const User = z.object({
   username: z.string(),
-});
+})
 
-User.parse({ username: &quot;Ludwig&quot; });
+User.parse({ username: &#39;Ludwig&#39; })
 
 // extract the inferred type
-type User = z.infer&lt;typeof User&gt;;
+type User = z.infer&lt;typeof User&gt;
 // { username: string }
 </code></pre>
 <p>我个人比较看好的一个库，在 tRPC、Blitz 等前后端一体交互的框架中能同时提供类型保障和 Schema 校验，同时和 Prisma 这一类库也有着很好地集成。最重要的是社区生态非常丰富，有许多自动生成的工具（<a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Frsinohara%2Fjson-to-zod">json-to-zod</a>、<a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fkbkk%2Fabitia%2Ftree%2Fmaster%2Fpackages%2Fzod-dto">zod-nest-dto</a> 等）。</p>
@@ -123,51 +125,51 @@ type User = z.infer&lt;typeof User&gt;;
 </ul>
 <pre><code class="lang-typescript">export class Post {
   @Length(10, 20)
-  title: string;
+  title: string
 
   @Contains(&#39;hello&#39;)
-  text: string;
+  text: string
 
   @IsInt()
   @Min(0)
   @Max(10)
-  rating: number;
+  rating: number
 
   @IsEmail()
-  email: string;
+  email: string
 }
 
-let post = new Post();
-post.title = &#39;Hello&#39;; // 错误
-post.text = &#39;this is a great post about hell world&#39;; // 错误
-post.rating = 11; // 错误
-post.email = &#39;google.com&#39;; // 错误
+let post = new Post()
+post.title = &#39;Hello&#39; // 错误
+post.text = &#39;this is a great post about hell world&#39; // 错误
+post.rating = 11 // 错误
+post.email = &#39;google.com&#39; // 错误
 
-validate(post).then(errors =&gt; {
+validate(post).then((errors) =&gt; {
   // 查看是否返回了错误
   if (errors.length &gt; 0) {
-    console.log(&#39;校验失败，错误信息: &#39;, errors);
+    console.log(&#39;校验失败，错误信息: &#39;, errors)
   } else {
-    console.log(&#39;校验通过！&#39;);
+    console.log(&#39;校验通过！&#39;)
   }
-});
+})
 </code></pre>
 <ul>
 <li><p><a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fianstormtaylor%2Fsuperstruct">superstruct</a>，功能与使用方式类似于 zod，更老牌一些。</p>
 </li>
 <li><p><a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fsindresorhus%2Fow">ow</a>，用于函数参数的校验，我通常在 CLI 工具里大量使用。</p>
-<pre><code class="lang-typescript">import ow from &#39;ow&#39;;
+<pre><code class="lang-typescript">import ow from &#39;ow&#39;
 
-const unicorn = input =&gt; {
-    ow(input, ow.string.minLength(5));
+const unicorn = (input) =&gt; {
+  ow(input, ow.string.minLength(5))
 
-    // …
-};
+  // …
+}
 
-unicorn(3);
+unicorn(3)
 //=&gt; ArgumentError: Expected `input` to be of type `string` but received type `number`
 
-unicorn(&#39;yo&#39;);
+unicorn(&#39;yo&#39;)
 //=&gt; ArgumentError: Expected string `input` to have a minimum length of `5`, got `yo`
 </code></pre>
 </li>

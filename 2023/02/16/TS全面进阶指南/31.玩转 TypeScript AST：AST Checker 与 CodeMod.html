@@ -1,4 +1,6 @@
-<h2 id="前置知识：Babel-的基本工作流程"><a href="#前置知识：Babel-的基本工作流程" class="headerlink" title="前置知识：Babel 的基本工作流程"></a>前置知识：Babel 的基本工作流程</h2><p>在本节的最开始，我有必要郑重说明下，我本身并不是科班出身，没有系统学习过编译原理，以下涉及编译原理的概念大部分来自于在社区的学习所得，也欢迎你指出其中的错误，我将认真对待并修正。</p>
+<hr>
+<p>title: 31.玩转 TypeScript AST：AST Checker 与 CodeMod<br>date: 2023-02-16 16:29:28<br>tags: TypeScript<br>updated: 更新日期<br>cover:<br>description: TS全面进阶指南<br>categories: TS全面进阶指南<br>highlight_shrink: false</p>
+<h2 id="index-false"><a href="#index-false" class="headerlink" title="index: false"></a>index: false</h2><h2 id="前置知识：Babel-的基本工作流程"><a href="#前置知识：Babel-的基本工作流程" class="headerlink" title="前置知识：Babel 的基本工作流程"></a>前置知识：Babel 的基本工作流程</h2><p>在本节的最开始，我有必要郑重说明下，我本身并不是科班出身，没有系统学习过编译原理，以下涉及编译原理的概念大部分来自于在社区的学习所得，也欢迎你指出其中的错误，我将认真对待并修正。</p>
 <blockquote>
 <p>本节原本是被作为短小精悍的漫谈篇呈现的，但有部分同学反馈对这部分知识确实有刚需，因此进行了大量内容扩充后加入到正文篇中。</p>
 </blockquote>
@@ -8,7 +10,7 @@
 <p>从功能角度，Babel 的<a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel">源码</a>大致可以分为这么几个部分：</p>
 <ul>
 <li><p>核心部分，包括 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel%2Fblob%2Fmain%2Fpackages%2Fbabel-parser%2FREADME.md">Parser</a>、<a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel%2Ftree%2Fmain%2Fpackages%2Fbabel-traverse">Transformer</a> 以及 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fbabel%2Fbabel%2Ftree%2Fmain%2Fpackages%2Fbabel-generator">Generator</a>，它们主要负责对源码的解析、转换以及生成等工作。一份源码首先会被 Parser 通过词法分析与语法分析，转换为 AST，也就是抽象语法树的形式，然后由 Transformer 对这棵语法树上的 AST 结点进行遍历处理，比如将所有的函数声明转换为函数表达式，最后由 Generator 基于处理完毕的 AST 结点转换出新的代码，就实现了语法的降级。</p>
-<p>AST其实就是将代码的每个部分进行拆分，得到一棵树形的结构表示，你可以在 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fastexplorer.net%2F">AST Explorer</a> 上，实时查看一段代码转换完毕的 AST 结构。</p>
+<p>AST 其实就是将代码的每个部分进行拆分，得到一棵树形的结构表示，你可以在 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fastexplorer.net%2F">AST Explorer</a> 上，实时查看一段代码转换完毕的 AST 结构。</p>
 <p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8edd8090919144b19d9c2fd605cdfc2d~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp" alt="img"></p>
 </li>
 <li><p>插件相关，如 <code>babel-plugin-syntax-jsx</code> <code>babel-plugin-transform-for-of</code> 以及 <code>babel-plugin-proposal-decorators</code> 等，上面的核心部分只包括最简单的处理逻辑，如果你想转换 JSX 代码，想将 for…of 降级为 for 循环，想使用装饰器等语法，就需要这些插件来支持，这些插件其实就是遍历 AST 时，对目标的 AST 结点注册处理逻辑。一般来说一个插件只会关注一种特定的语法。当然，每个浏览器支持的语法版本都是差异巨大的，因此我们需要 <code>babel-preset-env</code>，自动地基于浏览器版本去确定需要使用的插件。</p>
@@ -21,17 +23,17 @@
 <blockquote>
 <p>由于本节的重点并不是详细介绍 Compiler API 的使用，因此并不会对其进行非常详细介绍。</p>
 </blockquote>
-<pre><code class="lang-typescript">import ts from &#39;typescript&#39;;
+<pre><code class="lang-typescript">import ts from &#39;typescript&#39;
 
 function makeFactorialFunction() {
   // 创建代表函数名 factorial 的 Identifier 结点
-  const functionName = ts.factory.createIdentifier(&#39;factorial&#39;);
+  const functionName = ts.factory.createIdentifier(&#39;factorial&#39;)
   // 创建代表参数名 n 的 Identifier 结点
-  const paramName = ts.factory.createIdentifier(&#39;n&#39;);
+  const paramName = ts.factory.createIdentifier(&#39;n&#39;)
   // 创建参数类型结点
   const paramType = ts.factory.createKeywordTypeNode(
     ts.SyntaxKind.NumberKeyword
-  );
+  )
 
   // 创建参数的声明
   const parameter = ts.factory.createParameterDeclaration(
@@ -41,7 +43,7 @@ function makeFactorialFunction() {
     paramName,
     undefined,
     paramType
-  );
+  )
 
   // 创建表达式 n ≤ 1
   const condition = ts.factory.createBinaryExpression(
@@ -51,21 +53,21 @@ function makeFactorialFunction() {
     ts.SyntaxKind.LessThanEqualsToken,
     // 1
     ts.factory.createNumericLiteral(1)
-  );
+  )
 
   // 创建代码块
   const ifBody = ts.factory.createBlock(
     // 创建代码块内的返回语句
     [ts.factory.createReturnStatement(ts.factory.createNumericLiteral(1))],
     true
-  );
+  )
 
   // 创建表达式 n - 1
   const decrementedArg = ts.factory.createBinaryExpression(
     paramName,
     ts.SyntaxKind.MinusToken,
     ts.factory.createNumericLiteral(1)
-  );
+  )
 
   // 创建表达式 n * factorial(n - 1)
   const recurse = ts.factory.createBinaryExpression(
@@ -73,14 +75,14 @@ function makeFactorialFunction() {
     ts.SyntaxKind.AsteriskToken,
     // 创建函数调用表达式
     ts.factory.createCallExpression(functionName, undefined, [decrementedArg])
-  );
+  )
 
   const statements = [
     // 创建 IF 语句
     ts.factory.createIfStatement(condition, ifBody),
     // 创建 return 语句
     ts.factory.createReturnStatement(recurse),
-  ];
+  ]
 
   // 创建函数声明
   return ts.factory.createFunctionDeclaration(
@@ -94,7 +96,7 @@ function makeFactorialFunction() {
     ts.factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
     // 函数体
     ts.factory.createBlock(statements, true)
-  );
+  )
 }
 
 // 创建一个虚拟的源文件
@@ -104,24 +106,24 @@ const resultFile = ts.createSourceFile(
   ts.ScriptTarget.Latest,
   false,
   ts.ScriptKind.TS
-);
+)
 
-const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
+const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed })
 
 const result = printer.printNode(
   ts.EmitHint.Unspecified,
   makeFactorialFunction(),
   resultFile
-);
+)
 
-console.log(result);
+console.log(result)
 </code></pre>
 <p>这么一长串代码，最后会生成这样的一段函数声明：</p>
 <pre><code class="lang-typescript">export function factorial(n: number): number {
   if (n &lt;= 1) {
-    return 1;
+    return 1
   }
-  return n * factorial(n - 1);
+  return n * factorial(n - 1)
 }
 </code></pre>
 <p>在这个例子中，我们从最基础的 identifier （代表变量名的结点）开始创建，组装参数、if 语句条件与代码块、函数的返回语句，最后通过 <code>createFunctionDeclaration</code> 完成组装。要想流畅地使用，你需要对 Expression、Declaration、Statement 等 AST 的结点类型有比较清晰地了解，比如上面的 If 语句需要使用哪些 token 来组装，还需要了解 TypeScript 的 AST，如 interface、类型别名、装饰器等实际的 AST 结构。</p>
@@ -129,65 +131,65 @@ console.log(result);
 <blockquote>
 <p>以下示例来自于神光的文章分享，也推荐各位有兴趣进一步学习编译原理的同学关注神光老师的社区分享。</p>
 </blockquote>
-<pre><code class="lang-typescript">const { declare } = require(&quot;@babel/helper-plugin-utils&quot;);
+<pre><code class="lang-typescript">const { declare } = require(&#39;@babel/helper-plugin-utils&#39;)
 
 // 不允许函数类型的赋值
 const noFuncAssignLint = declare((api, options, dirname) =&gt; {
-  api.assertVersion(7);
+  api.assertVersion(7)
 
   return {
     pre(file) {
-      file.set(&quot;errors&quot;, []);
+      file.set(&#39;errors&#39;, [])
     },
     visitor: {
       AssignmentExpression(path, state) {
-        const errors = state.file.get(&quot;errors&quot;);
-        const assignTarget = path.get(&quot;left&quot;).toString();
-        const binding = path.scope.getBinding(assignTarget);
+        const errors = state.file.get(&#39;errors&#39;)
+        const assignTarget = path.get(&#39;left&#39;).toString()
+        const binding = path.scope.getBinding(assignTarget)
         if (binding) {
           if (
             binding.path.isFunctionDeclaration() ||
             binding.path.isFunctionExpression()
           ) {
-            const tmp = Error.stackTraceLimit;
-            Error.stackTraceLimit = 0;
+            const tmp = Error.stackTraceLimit
+            Error.stackTraceLimit = 0
             errors.push(
-              path.buildCodeFrameError(&quot;can not reassign to function&quot;, Error)
-            );
-            Error.stackTraceLimit = tmp;
+              path.buildCodeFrameError(&#39;can not reassign to function&#39;, Error)
+            )
+            Error.stackTraceLimit = tmp
           }
         }
       },
     },
     post(file) {
-      console.log(file.get(&quot;errors&quot;));
+      console.log(file.get(&#39;errors&#39;))
     },
-  };
-});
+  }
+})
 </code></pre>
 <p>而 jscodeshift 则提供的是命令式的 API：</p>
 <pre><code class="lang-typescript">module.exports = function (fileInfo, api) {
   return api
     .jscodeshift(fileInfo.source)
-    .findVariableDeclarators(&quot;foo&quot;)
-    .renameTo(&quot;bar&quot;)
-    .toSource();
-};
+    .findVariableDeclarators(&#39;foo&#39;)
+    .renameTo(&#39;bar&#39;)
+    .toSource()
+}
 </code></pre>
 <p>虽然命令式看起来很简单，但却可能导致对 AST 节点的遗漏（如果底层封装没有完全覆盖掉边界情况），就像鱼和熊掌不可兼得一样。而 TypeScript Compiler API 同样属于命令式，只不过它的使用风格并非链式，而更像是组合式。</p>
 <p>铺垫了这么多，是时候请出我们本节的主角了。</p>
 <h2 id="使用-ts-morph"><a href="#使用-ts-morph" class="headerlink" title="使用 ts-morph"></a>使用 ts-morph</h2><p>上面的例子看下来，可能有部分同学已经被劝退了，这一堆眼花缭乱的 API，我咋知道啥时候该用哪个，难道还要先从头学一遍编译原理？</p>
 <p>当然不，你可以永远相信 JavaScript 社区。为了简化 TypeScript AST 的操作，我们本节的主角 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2Fts-morph">ts-morph</a> 诞生了，它的原名为 <code>ts-simple-ast</code>，从这两个名字你都能感受到它的目的：<strong>让 AST 操作更简单一些</strong>（morph 意为变形）。</p>
 <p>我们直接来看它的使用方式，直观地感受下它是如何实现更简单的 AST 操作的：</p>
-<pre><code class="lang-typescript">import path from &#39;path&#39;;
-import chalk from &#39;chalk&#39;;
-import { Project, SyntaxKind } from &#39;ts-morph&#39;;
+<pre><code class="lang-typescript">import path from &#39;path&#39;
+import chalk from &#39;chalk&#39;
+import { Project, SyntaxKind } from &#39;ts-morph&#39;
 
 // 实例化一个“项目实例”
-const p = new Project();
+const p = new Project()
 
 // 将某个路径的文件添加到这个项目内
-const source = p.addSourceFileAtPath(path.resolve(__dirname, &#39;./source.ts&#39;));
+const source = p.addSourceFileAtPath(path.resolve(__dirname, &#39;./source.ts&#39;))
 
 /**
  * 创建一个接口
@@ -197,7 +199,7 @@ const source = p.addSourceFileAtPath(path.resolve(__dirname, &#39;./source.ts&#3
 const interfaceDec = source.addInterface({
   name: &#39;IUser&#39;,
   properties: [],
-});
+})
 
 // 新增属性
 interfaceDec.addProperties([
@@ -209,7 +211,7 @@ interfaceDec.addProperties([
     name: &#39;age&#39;,
     type: &#39;number&#39;,
   },
-]);
+])
 
 // 添加 JSDoc 注释 @author Linbudu
 interfaceDec.addJsDoc({
@@ -219,38 +221,38 @@ interfaceDec.addJsDoc({
       text: &#39;Linbudu&#39;,
     },
   ],
-});
+})
 
 // 添加泛型 T extends Record&lt;string, any&gt;
 interfaceDec.addTypeParameter({
   name: &#39;T&#39;,
   constraint: &#39;Record&lt;string, any&gt;&#39;,
-});
+})
 
 // 获取接口名称
-interfaceDec.getName();
+interfaceDec.getName()
 
 // 删除这个接口声明
-interfaceDec.remove();
+interfaceDec.remove()
 
 // 创建一条导入：import { readFile, rmSync } from &#39;fs&#39;;
 const importDec = source.addImportDeclaration({
   namedImports: [&#39;readFile&#39;, &#39;rmSync&#39;],
   moduleSpecifier: &#39;fs&#39;,
-});
+})
 
 // 新增具名导入 appendFile
-importDec.addNamedImport(&#39;appendFile&#39;);
+importDec.addNamedImport(&#39;appendFile&#39;)
 // 设置默认导入 fs
-importDec.setDefaultImport(&#39;fs&#39;);
+importDec.setDefaultImport(&#39;fs&#39;)
 
 // 删除默认导入
-importDec.removeDefaultImport();
+importDec.removeDefaultImport()
 // 删除命名空间导入
-importDec.removeNamespaceImport();
+importDec.removeNamespaceImport()
 
 // 删除这条导入声明
-importDec.remove();
+importDec.remove()
 </code></pre>
 <p>可以看到，ts-morph 提供了一系列直观的封装方法，只要调用这些方法就可以完成对 AST 的各种操作，包括新增、更新、删除、读取等等！</p>
 <p>通过使用 ts-morph，你可以使用非常简便的方式来完成各种有趣好玩的操作，比如我们下面会讲到的为 React 组件添加 memo、检查并更新导入语句、从 JSON 文件转换到 TypeScript 类型等等。而实际实现中，当然也是基于 Compiler API 的封装，但是它屏蔽了 Statement、Expression、Declaration、Token 等等概念，直接提供给你应用层的实现：创建一个接口，添加泛型参数，添加属性，添加继承，将其设置为导出，完成！在这个过程中，你并不需要理解底层发生了哪些 AST 结点的变化和操作。</p>
@@ -276,12 +278,12 @@ importDec.remove();
 <p>接下来我们会使用 ts-morph 来实现数个示例，它们没有什么难度，毕竟我们的目的在于熟悉“分析-定位-处理-保存”这个工作流程嘛。而且有了 ts-morph 的加持，很多 AST 操作的难度都会下降几个级别。</p>
 <h3 id="示例：导入语句"><a href="#示例：导入语句" class="headerlink" title="示例：导入语句"></a>示例：导入语句</h3><p>许多场景的 AST 操作中，其实都会涉及对导入语句的处理。比如 CodeMod 会将你旧版本的导入更新为新版本的导入，或者更换导入语句的导入路径（模块名），而在某些工程场景下，AST Checker 也会检查代码中是否进行了必需的 polyfill 导入。</p>
 <p>我们的源码如下：</p>
-<pre><code class="lang-typescript">import { readFileSync } from &#39;fs&#39;;
-import &#39;some_required_polyfill&#39;;
+<pre><code class="lang-typescript">import { readFileSync } from &#39;fs&#39;
+import &#39;some_required_polyfill&#39;
 </code></pre>
 <p>操作后的代码如下：</p>
-<pre><code class="lang-typescript">import &#39;some_required_polyfill&#39;;
-import { readFile } from &quot;fs/promises&quot;;
+<pre><code class="lang-typescript">import &#39;some_required_polyfill&#39;
+import { readFile } from &#39;fs/promises&#39;
 </code></pre>
 <p>在这个例子中，我们希望进行两种操作：</p>
 <ul>
@@ -297,29 +299,29 @@ import { readFile } from &quot;fs/promises&quot;;
 <li>检查是否存在以 <code>some_required_polyfill</code> 为导入名的导入声明</li>
 </ul>
 <p>直接看具体实现：</p>
-<pre><code class="lang-typescript">import path from &#39;path&#39;;
-import { Project, SyntaxKind, SourceFile, ImportDeclaration } from &#39;ts-morph&#39;;
-import { uniq } from &#39;lodash&#39;;
+<pre><code class="lang-typescript">import path from &#39;path&#39;
+import { Project, SyntaxKind, SourceFile, ImportDeclaration } from &#39;ts-morph&#39;
+import { uniq } from &#39;lodash&#39;
 
-const p = new Project();
+const p = new Project()
 
-const source = p.addSourceFileAtPath(path.resolve(__dirname, &#39;./source.ts&#39;));
+const source = p.addSourceFileAtPath(path.resolve(__dirname, &#39;./source.ts&#39;))
 
 // 获取所有导入声明中的模块名
 export function getImportModuleSpecifiers(source: SourceFile): string[] {
   return uniq(
     source.getImportDeclarations().map((i) =&gt; i.getModuleSpecifierValue())
-  );
+  )
 }
 
-const REQUIRED = [&#39;some_required_polyfill&#39;];
+const REQUIRED = [&#39;some_required_polyfill&#39;]
 
-const allDeclarations = source.getImportDeclarations();
+const allDeclarations = source.getImportDeclarations()
 
-const allSpecifiers = getImportModuleSpecifiers(source);
+const allSpecifiers = getImportModuleSpecifiers(source)
 
 if (!REQUIRED.every((i) =&gt; allSpecifiers.includes(i))) {
-  throw new Error(&#39;missing required polyfill&#39;);
+  throw new Error(&#39;missing required polyfill&#39;)
 }
 
 // 设计一个通用的替换模式
@@ -333,9 +335,9 @@ const FORBIDDEN = [
     namedImportsReplacement: (raw: string) =&gt;
       raw.endsWith(&#39;Sync&#39;) ? raw.slice(0, -4) : raw,
   },
-];
+]
 
-const FORBIDDEN_SPECIFIERS = FORBIDDEN.map((i) =&gt; i.moduleSpecifier);
+const FORBIDDEN_SPECIFIERS = FORBIDDEN.map((i) =&gt; i.moduleSpecifier)
 
 for (const specifier of allSpecifiers) {
   if (FORBIDDEN_SPECIFIERS.includes(specifier)) {
@@ -343,23 +345,23 @@ for (const specifier of allSpecifiers) {
       (i) =&gt;
         // 检查是否是要被替换的模块
         i.getModuleSpecifierValue() === specifier
-    );
+    )
 
     // 找到要被替换的导入声明
     const replacementMatch = FORBIDDEN.find(
       (i) =&gt; i.moduleSpecifier === specifier
-    );
+    )
 
     // 收集原本的具名导入
-    const namedImports = target?.getNamedImports() ?? [];
+    const namedImports = target?.getNamedImports() ?? []
 
     // 替换为新的具名导入
     const namedImportsReplacement = namedImports.map((i) =&gt;
       replacementMatch?.namedImportsReplacement(i.getText())
-    );
+    )
 
     // 移除原本的导入
-    target?.remove();
+    target?.remove()
 
     // 增加新的导入
     source.addImportDeclaration({
@@ -367,11 +369,11 @@ for (const specifier of allSpecifiers) {
       namedImports: namedImportsReplacement.map((i) =&gt; ({
         name: i!,
       })),
-    });
+    })
   }
 }
 
-console.log(source.getText());
+console.log(source.getText())
 </code></pre>
 <p>这里我们使用的 API 主要包括：</p>
 <ul>
@@ -383,7 +385,7 @@ console.log(source.getText());
 <p>扩展：如何处理默认导入、命名空间导入的形式？</p>
 <h3 id="示例：添加装饰器"><a href="#示例：添加装饰器" class="headerlink" title="示例：添加装饰器"></a>示例：添加装饰器</h3><p>在装饰器一节我们说到，可以使用方法装饰器来测量一个方法的调用耗时，但一个一个加未免太过麻烦，更好的方式是通过 AST 来批量处理目标 Class 的目标方法：</p>
 <pre><code class="lang-typescript">abstract class Handler {
-  abstract handle(input: unknown): void;
+  abstract handle(input: unknown): void
 }
 
 class NotHandler {}
@@ -402,21 +404,21 @@ class MessageHandler implements Handler {
 </code></pre>
 <p>其处理结果应当是这样的：</p>
 <pre><code class="lang-typescript">abstract class Handler {
-  abstract handle(input: unknown): void;
+  abstract handle(input: unknown): void
 }
 
 class NotHandler {}
 
 class EventHandler implements Handler {
-    @PerformanceMark()
-    handle(input: unknown): void {
+  @PerformanceMark()
+  handle(input: unknown): void {
     // ...
   }
 }
 
 class MessageHandler implements Handler {
-    @PerformanceMark()
-    handle(input: unknown): void {
+  @PerformanceMark()
+  handle(input: unknown): void {
     // ...
   }
 }
@@ -430,41 +432,41 @@ class MessageHandler implements Handler {
 <li>为这些声明内部的 handle 方法添加 <code>@PerformanceMark</code> 装饰器</li>
 </ul>
 <p>完整实现如下：</p>
-<pre><code class="lang-typescript">import path from &#39;path&#39;;
-import { Project, ClassDeclaration } from &#39;ts-morph&#39;;
+<pre><code class="lang-typescript">import path from &#39;path&#39;
+import { Project, ClassDeclaration } from &#39;ts-morph&#39;
 
-const p = new Project();
+const p = new Project()
 
-const source = p.addSourceFileAtPath(path.resolve(__dirname, &#39;./source.ts&#39;));
+const source = p.addSourceFileAtPath(path.resolve(__dirname, &#39;./source.ts&#39;))
 
-const IMPLS = [&#39;Handler&#39;];
+const IMPLS = [&#39;Handler&#39;]
 
 // 获取所有目标 Class 声明
 const filteredClassDeclarations: ClassDeclaration[] = source
   .getClasses()
   .filter((cls) =&gt; {
-    const impls = cls.getImplements().map((impl) =&gt; impl.getText());
-    return IMPLS.some((impl) =&gt; impls.includes(impl));
-  });
+    const impls = cls.getImplements().map((impl) =&gt; impl.getText())
+    return IMPLS.some((impl) =&gt; impls.includes(impl))
+  })
 
-const METHODS = [&#39;handle&#39;];
+const METHODS = [&#39;handle&#39;]
 
 for (const cls of filteredClassDeclarations) {
   // 拿到所有方法
-  const methods = cls.getMethods().map((method) =&gt; method.getName());
+  const methods = cls.getMethods().map((method) =&gt; method.getName())
   for (const method of methods) {
     if (METHODS.includes(method)) {
       // 拿到目标方法声明
-      const methodDeclaration = cls.getMethod(method)!;
+      const methodDeclaration = cls.getMethod(method)!
       methodDeclaration.addDecorator({
         name: &#39;PerformanceMark&#39;,
         arguments: [],
-      });
+      })
     }
   }
 }
 
-console.log(source.getText());
+console.log(source.getText())
 </code></pre>
 <p>我们主要使用了这么几个 API：</p>
 <ul>
@@ -476,57 +478,57 @@ console.log(source.getText());
 <p>扩展：试试给方法的参数也添加方法参数装饰器？</p>
 <h3 id="示例：添加-memo"><a href="#示例：添加-memo" class="headerlink" title="示例：添加 memo"></a>示例：添加 memo</h3><p>为 React 组件添加 memo 是一个常见的优化手段，我们是否可以通过 AST 操作来批量为组件添加 memo ？</p>
 <p>我们的源码是这样的：</p>
-<pre><code class="lang-typescript">import { useState } from &#39;react&#39;;
+<pre><code class="lang-typescript">import { useState } from &#39;react&#39;
 
 const Comp = () =&gt; {
-  return &lt;&gt;&lt;/&gt;;
-};
+  return &lt;&gt;&lt;/&gt;
+}
 
-export default Comp;
+export default Comp
 </code></pre>
 <p>处理后的结果则是这样的：</p>
-<pre><code class="lang-typescript">import { memo, useState } from &#39;react&#39;;
+<pre><code class="lang-typescript">import { memo, useState } from &#39;react&#39;
 
 const Comp = () =&gt; {
-  return &lt;&gt;&lt;/&gt;;
-};
+  return &lt;&gt;&lt;/&gt;
+}
 
-export default memo(Comp);
+export default memo(Comp)
 </code></pre>
 <p>也就是说，我们需要添加具名导入，以及修改默认导出表达式两个步骤。</p>
 <p>首先分析 AST 结构：</p>
 <p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/776e37d6052c4bf3a703d0bdcf7e146f~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp" alt="img"></p>
 <p>可以看到，我们需要处理的两处分别为 NamedImports 与 ExportAssignment ，接下来就简单了：</p>
-<pre><code class="lang-typescript">import path from &#39;path&#39;;
-import { Project, SyntaxKind, SourceFile } from &#39;ts-morph&#39;;
+<pre><code class="lang-typescript">import path from &#39;path&#39;
+import { Project, SyntaxKind, SourceFile } from &#39;ts-morph&#39;
 
-const p = new Project();
+const p = new Project()
 
-const source = p.addSourceFileAtPath(path.resolve(__dirname, &#39;./source.tsx&#39;));
+const source = p.addSourceFileAtPath(path.resolve(__dirname, &#39;./source.tsx&#39;))
 
 // 获取默认导出
 const exportDefaultAssignment = source
   .getFirstChildByKind(SyntaxKind.SyntaxList)!
-  .getFirstChildByKind(SyntaxKind.ExportAssignment)!;
+  .getFirstChildByKind(SyntaxKind.ExportAssignment)!
 
 // 获取原本的导出语句的组件名
 const targetIdentifier = exportDefaultAssignment
   ?.getFirstChildByKind(SyntaxKind.Identifier)
-  ?.getText()!;
+  ?.getText()!
 
 // 获取 react 对应的导入声明
 const reactImport = source.getImportDeclaration(
   (imp) =&gt; imp.getModuleSpecifierValue() === &#39;react&#39;
-)!;
+)!
 
 // 新增一个具名导入
-reactImport.insertNamedImport(0, &#39;memo&#39;);
+reactImport.insertNamedImport(0, &#39;memo&#39;)
 
 // 新增 memo 包裹
 !targetIdentifier.startsWith(&#39;memo&#39;) &amp;&amp;
- exportDefaultAssignment.setExpression(`memo(${targetIdentifier})`);
+  exportDefaultAssignment.setExpression(`memo(${targetIdentifier})`)
 
-console.log(source.getText());
+console.log(source.getText())
 </code></pre>
 <p>我们主要调用了这些 API：</p>
 <ul>
@@ -543,11 +545,7 @@ console.log(source.getText());
   &quot;name&quot;: &quot;linbudu&quot;,
   &quot;age&quot;: 22,
   &quot;sex&quot;: &quot;male&quot;,
-  &quot;favors&quot;: [
-    &quot;execrise&quot;,
-    &quot;writting&quot;,
-    999
-  ],
+  &quot;favors&quot;: [&quot;execrise&quot;, &quot;writting&quot;, 999],
   &quot;job&quot;: {
     &quot;name&quot;: &quot;programmer&quot;,
     &quot;stack&quot;: &quot;javascript&quot;,
@@ -567,23 +565,23 @@ console.log(source.getText());
 </code></pre>
 <p>最终输出的类型定义是这样的：</p>
 <pre><code class="lang-typescript">export interface IStruct {
-    name: string;
-    age: number;
-    sex: string;
-    favors: (string | number)[];
-    IJob: IJob;
-    pets: IStructPets[];
+  name: string
+  age: number
+  sex: string
+  favors: (string | number)[]
+  IJob: IJob
+  pets: IStructPets[]
 }
 
 export interface IJob {
-    name: string;
-    stack: string;
-    company: string;
+  name: string
+  stack: string
+  company: string
 }
 
 export interface IStructPets {
-    id: number;
-    type: string;
+  id: number
+  type: string
 }
 </code></pre>
 <p>具体实现其实并不复杂，由于 JSON 的限制，我们无需处理函数之类的类型，但也无法实现字面量类型与枚举这样精确的定义。然而绝大部分情况下，JSON 中的值类型其实还是字符串、数字、布尔值以及对象与数组这五位。</p>
@@ -595,21 +593,21 @@ export interface IStructPets {
 <li>对于数组类型，如果其中是原始类型，提取所有原始类型值的类型，合并为联合类型，如果其中是对象类型，则遍历其中的对象类型，类似上一步。</li>
 </ul>
 <p>来看完整的代码：</p>
-<pre><code class="lang-typescript">import path from &#39;path&#39;;
-import fs from &#39;fs-extra&#39;;
-import { Project } from &#39;ts-morph&#39;;
-import { capitalize, uniq } from &#39;lodash&#39;;
+<pre><code class="lang-typescript">import path from &#39;path&#39;
+import fs from &#39;fs-extra&#39;
+import { Project } from &#39;ts-morph&#39;
+import { capitalize, uniq } from &#39;lodash&#39;
 
-import json from &#39;./source.json&#39;;
+import json from &#39;./source.json&#39;
 
-const p = new Project();
+const p = new Project()
 
-const filePath = path.resolve(__dirname, &#39;./source.ts&#39;);
+const filePath = path.resolve(__dirname, &#39;./source.ts&#39;)
 
-fs.rmSync(filePath);
-fs.ensureFileSync(filePath);
+fs.rmSync(filePath)
+fs.ensureFileSync(filePath)
 
-const source = p.addSourceFileAtPath(filePath);
+const source = p.addSourceFileAtPath(filePath)
 
 function objectToInterfaceStruct(
   identifier: string,
@@ -618,7 +616,7 @@ function objectToInterfaceStruct(
   const interfaceDeclaration = source.addInterface({
     name: identifier,
     isExported: true,
-  });
+  })
 
   for (const [key, value] of Object.entries(input)) {
     // 最简单的情况，直接添加属性
@@ -626,19 +624,19 @@ function objectToInterfaceStruct(
       interfaceDeclaration.addProperty({
         name: key,
         type: typeof value,
-      });
+      })
     }
 
     // 简单起见，不处理混合或者更复杂的情况
     if (Array.isArray(value)) {
       // 对象类型元素
-      const objectElement = value.filter((v) =&gt; typeof v === &#39;object&#39;);
+      const objectElement = value.filter((v) =&gt; typeof v === &#39;object&#39;)
       // 原始类型元素
       const primitiveElement = value.filter((v) =&gt;
         [&#39;string&#39;, &#39;number&#39;, &#39;boolean&#39;].includes(typeof v)
-      );
+      )
 
-      const primitiveElementTypes = uniq(primitiveElement.map((v) =&gt; typeof v));
+      const primitiveElementTypes = uniq(primitiveElement.map((v) =&gt; typeof v))
 
       // 对对象类型元素，只取第一个来提取类型
       if (objectElement.length &gt; 0) {
@@ -646,20 +644,20 @@ function objectToInterfaceStruct(
         const objectType = objectToInterfaceStruct(
           `${identifier}${capitalize(key)}`,
           objectElement[0]
-        );
+        )
         interfaceDeclaration.addProperty({
           name: key,
           type: `${objectType.getName()}[]`,
-        });
+        })
       } else {
         interfaceDeclaration.addProperty({
           name: key,
           // 使用联合类型 + 数组作为此属性的类型
           type: `(${primitiveElementTypes.join(&#39; | &#39;)})[]`,
-        });
+        })
       }
 
-      continue;
+      continue
     }
 
     // 对于对象类型，再次遍历
@@ -667,24 +665,24 @@ function objectToInterfaceStruct(
       const nestedStruct = objectToInterfaceStruct(
         `I${capitalize(key)}`,
         value as Record&lt;string, unknown&gt;
-      );
+      )
 
       interfaceDeclaration.addProperty({
         name: key,
         // 使用从接口结构得到的接口名称
         type: nestedStruct.getName(),
-      });
+      })
     }
   }
 
-  return interfaceDeclaration;
+  return interfaceDeclaration
 }
 
-objectToInterfaceStruct(&#39;IStruct&#39;, json);
+objectToInterfaceStruct(&#39;IStruct&#39;, json)
 
-source.saveSync();
+source.saveSync()
 
-console.log(source.getText());
+console.log(source.getText())
 </code></pre>
 <p>在这一部分，我们主要使用两个 API ：</p>
 <ul>
@@ -719,13 +717,13 @@ function utils() {}
 <li>如果过期，抛出错误，并指出 <code>@author</code> 标记的作者</li>
 </ul>
 <p>直接来看实现：</p>
-<pre><code class="lang-typescript">import path from &#39;path&#39;;
-import chalk from &#39;chalk&#39;;
-import { Project, SyntaxKind, SourceFile, FunctionDeclaration } from &#39;ts-morph&#39;;
+<pre><code class="lang-typescript">import path from &#39;path&#39;
+import chalk from &#39;chalk&#39;
+import { Project, SyntaxKind, SourceFile, FunctionDeclaration } from &#39;ts-morph&#39;
 
-const p = new Project();
+const p = new Project()
 
-const source = p.addSourceFileAtPath(path.resolve(__dirname, &#39;./source.ts&#39;));
+const source = p.addSourceFileAtPath(path.resolve(__dirname, &#39;./source.ts&#39;))
 
 // 收集所有的函数声明
 export function getAllFunctionDeclarations(
@@ -733,38 +731,38 @@ export function getAllFunctionDeclarations(
 ): FunctionDeclaration[] {
   const functionDeclarationList = source
     .getFirstChildByKind(SyntaxKind.SyntaxList)!
-    .getChildrenOfKind(SyntaxKind.FunctionDeclaration);
+    .getChildrenOfKind(SyntaxKind.FunctionDeclaration)
 
-  return functionDeclarationList;
+  return functionDeclarationList
 }
 
 // 收集所有存在 JSDoc 的函数声明
 const filteredFuncDeclarations = getAllFunctionDeclarations(source).filter(
   (func) =&gt; func.getJsDocs().length &gt; 0
-);
+)
 
 for (const func of filteredFuncDeclarations) {
-  const jsdocContent = func.getJsDocs()[0];
+  const jsdocContent = func.getJsDocs()[0]
 
-  const tags = jsdocContent.getTags();
+  const tags = jsdocContent.getTags()
 
-  const expireTag = tags.find((tag) =&gt; tag.getTagName() === &#39;expires&#39;);
+  const expireTag = tags.find((tag) =&gt; tag.getTagName() === &#39;expires&#39;)
 
   // 如果不存在 @expires 标签，则跳过
-  if (!expireTag) continue;
+  if (!expireTag) continue
 
   // 将其值处理为可解析的字符串
-  const [, expireDesc] = expireTag.getText().replace(/\*|\n/g, &#39;&#39;).split(&#39; &#39;);
+  const [, expireDesc] = expireTag.getText().replace(/\*|\n/g, &#39;&#39;).split(&#39; &#39;)
 
-  const expireDate = new Date(expireDesc).getTime();
-  const now = new Date().getTime();
+  const expireDate = new Date(expireDesc).getTime()
+  const now = new Date().getTime()
 
   // 对比时间
   if (expireDate &lt; now) {
-    const authorTag = tags.find((tag) =&gt; tag.getTagName() === &#39;author&#39;);
+    const authorTag = tags.find((tag) =&gt; tag.getTagName() === &#39;author&#39;)
     const [, author] = authorTag
       ? authorTag.getText().replace(/\*|\n/g, &#39;&#39;).split(&#39; &#39;)
-      : &#39;unknown&#39;;
+      : &#39;unknown&#39;
 
     console.log(
       chalk.red(
@@ -772,7 +770,7 @@ for (const func of filteredFuncDeclarations) {
           func.getName()
         )} is expired, author: ${chalk.white(author)}`
       )
-    );
+    )
   }
 }
 </code></pre>

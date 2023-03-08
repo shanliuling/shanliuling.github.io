@@ -1,4 +1,6 @@
-<p>我们已经结束了 TypeScript 类型能力的学习，这一节将进入 TypeScript 的实战应用篇。实战篇主要包括了工程能力、框架集成、ECMAScript 语法、TSConfig 解析以及 Node API 开发这五个部分。</p>
+<hr>
+<p>title: 20.工程层面的类型能力：类型声明、类型指令与命名空间<br>date: 2023-02-16 16:29:28<br>tags: TypeScript<br>updated: 更新日期<br>cover:<br>description: TS全面进阶指南<br>categories: TS全面进阶指南<br>highlight_shrink: false</p>
+<h2 id="index-false"><a href="#index-false" class="headerlink" title="index: false"></a>index: false</h2><p>我们已经结束了 TypeScript 类型能力的学习，这一节将进入 TypeScript 的实战应用篇。实战篇主要包括了工程能力、框架集成、ECMAScript 语法、TSConfig 解析以及 Node API 开发这五个部分。</p>
 <p>在这一节，我们主要介绍 TypeScript 的工程能力基础，包括类型指令、类型声明、命名空间这么几个部分。这些概念不仅可以帮助你了解到 TypeScript 工程能力的核心理念，也是接下来实战篇内容的前置基础。</p>
 <p>要开始学习工程能力，其实我们可以从一个很简单的场景开始。如果你已经有一定 TypeScript 的使用经验，那你很有可能遇到过这么一个场景：出现了莫名其妙的类型报错，但你又不知道从何入手解决，想让 TypeScript 直接忽略掉这一行出错的代码？此时，类型指令就是你最需要的工具。</p>
 <blockquote>
@@ -7,119 +9,119 @@
 <h2 id="类型检查指令"><a href="#类型检查指令" class="headerlink" title="类型检查指令"></a>类型检查指令</h2><p>在前端世界的许多工具中，其实都提供了 <strong>行内注释（Inline Comments）</strong> 的能力，用于支持在某一处特定代码<strong>使用特殊的配置来覆盖掉全局配置</strong>。最常见的即是 ESLint 与 Prettier 提供的禁用检查能力，如 <code>/* eslint-disable-next-lint */</code>、<code>&lt;!-- prettier-ignore --&gt;</code> 等。TypeScript 中同样提供了数个行内注释（这里我们称为类型指令），来进行单行代码或单文件级别的配置能力。这些指令均以 <code>// @ts-</code> 开头 ，我们依次来介绍。</p>
 <h3 id="ts-ignore-与-ts-expect-error"><a href="#ts-ignore-与-ts-expect-error" class="headerlink" title="ts-ignore 与 ts-expect-error"></a>ts-ignore 与 ts-expect-error</h3><p><code>ts-ignore</code> 应该是使用最为广泛的一个类型指令了，它的作用就是直接禁用掉对下一行代码的类型检查：</p>
 <pre><code class="lang-typescript">// @ts-ignore
-const name: string = 599;
+const name: string = 599
 </code></pre>
 <p>基本上所有的类型报错都可以通过这个指令来解决，但由于它本质是上 ignore 而不是 disable，也就意味着如果下一行代码并没有问题，那使用 ignore 反而就是一个错误了。因此 TypeScript 随后又引入了一个更严格版本的 ignore，即 <code>ts-expect-error</code>，它只有在<strong>下一行代码真的存在错误时</strong>才能被使用，否则它会给出一个错误：</p>
 <pre><code class="lang-typescript">// @ts-expect-error
-const name: string = 599;
+const name: string = 599
 
 // @ts-expect-error 错误使用此指令，报错
-const age: number = 599;
+const age: number = 599
 </code></pre>
 <p>在这里第二个 expect-error 指令会给出一个报错：<strong>无意义的 expect-error 指令</strong>。</p>
 <p>那这两个功能相同的指令应该如何取舍？我的建议是<strong>在所有地方都不要使用 ts-ignore</strong>，直接把这个指令打入冷宫封存起来。原因在上面我们也说了，对于这类 ignore 指令，本来就应当确保<strong>下一行真的存在错误时</strong>才去使用。</p>
 <p>这两个指令只能对单行代码生效，但如果我们有非常多的类型报错要处理（比如正在将一个 JavaScript 文件迁移到 TypeScript），难道要一个个为所有报错的地方都添加上禁用检查指令？当然不，正如 ESLint 中可以使用 <code>/* eslint-disable-next-line */</code> 禁用下一行代码检查，也可以使用 <code>/* eslint-disable */</code> 禁用整个文件检查一样， TypeScript 中也提供了对整个文件生效的类型指令：<code>ts-check</code> 与 <code>ts-nocheck</code>。</p>
 <h3 id="ts-check-与-ts-nocheck"><a href="#ts-check-与-ts-nocheck" class="headerlink" title="ts-check 与 ts-nocheck"></a>ts-check 与 ts-nocheck</h3><p>我们首先来看 ts-nocheck ，你可以把它理解为一个作用于整个文件的 ignore 指令，使用了 ts-nocheck 指令的 TS 文件将不再接受类型检查：</p>
 <pre><code class="lang-typescript">// @ts-nocheck 以下代码均不会抛出错误
-const name: string = 599;
-const age: number = &#39;linbudu&#39;;
+const name: string = 599
+const age: number = &#39;linbudu&#39;
 </code></pre>
 <p>那么 <code>ts-check</code> 呢？这看起来是一个多余的指令，因为默认情况下 TS 文件不是就会被检查吗？实际上，这两个指令还可以用在 JS 文件中。要明白这一点，首先我们要知道，TypeScript 并不是只能检查 TS 文件，对于 JS 文件它也可以通过类型推导与 JSDoc 的方式进行不完全的类型检查。</p>
 <pre><code class="lang-javascript">// JavaScript 文件
-let myAge = 18;
+let myAge = 18
 
 // 使用 JSDoc 标注变量类型
 /** @type {string} */
-let myName;
+let myName
 
 class Foo {
-  prop = 599;
+  prop = 599
 }
 </code></pre>
 <p>在上面的代码中，声明了初始值的 myAge 与 <code>Foo.prop</code> 都能被推导出其类型，而无初始值的 myName 也可以通过 JSDoc 标注的方式来显式地标注类型。</p>
 <p>但我们知道 JavaScript 是弱类型语言，表现之一即是变量可以<strong>被赋值为与初始值类型不一致的值</strong>，比如上面的例子进一步改写：</p>
-<pre><code class="lang-javascript">let myAge = 18;
-myAge = &quot;90&quot;; // 与初始值类型不同
+<pre><code class="lang-javascript">let myAge = 18
+myAge = &#39;90&#39; // 与初始值类型不同
 
 /** @type {string} */
-let myName;
-myName = 599; // 与 JSDoc 标注类型不同
+let myName
+myName = 599 // 与 JSDoc 标注类型不同
 </code></pre>
 <p>我们的赋值操作在类型层面显然是不成立的，但我们是在 JavaScript 文件中，因此这里并不会有类型报错。如果希望在 JS 文件中也能享受到类型检查，此时 <code>ts-check</code> 指令就可以登场了：</p>
 <pre><code class="lang-javascript">// @ts-check
 /** @type {string} */
-const myName = 599; // 报错！
+const myName = 599 // 报错！
 
-let myAge = 18;
-myAge = &#39;200&#39;; // 报错！
+let myAge = 18
+myAge = &#39;200&#39; // 报错！
 </code></pre>
 <p>这里我们的 <code>ts-check</code> 指令为 JavaScript 文件也带来了类型检查，而我们同时还可以使用 <code>ts-expect-error</code> 指令来忽略掉单行的代码检查：</p>
 <pre><code class="lang-javascript">// @ts-check
 /** @type {string} */
 // @ts-expect-error
-const myName = 599; // OK
+const myName = 599 // OK
 
-let myAge = 18;
+let myAge = 18
 // @ts-expect-error
-myAge = &#39;200&#39;; // OK
+myAge = &#39;200&#39; // OK
 </code></pre>
 <p>而 <code>ts-nocheck</code> 在 JS 文件中的作用和 TS 文件其实也一致，即禁用掉对当前文件的检查。如果我们希望开启对所有 JavaScript 文件的检查，只是忽略掉其中少数呢？此时我们在 TSConfig 中启用 <code>checkJs</code> 配置，来开启<strong>对所有包含的 JS 文件的类型检查</strong>，然后使用 <code>ts-nocheck</code> 来忽略掉其中少数的 JS 文件。</p>
 <p>除了类型指令以外，在实际项目开发中还有一个你会经常打交道的概念：类型声明。</p>
 <h2 id="类型声明"><a href="#类型声明" class="headerlink" title="类型声明"></a>类型声明</h2><p>在此前我们其实就已经接触到了类型声明，它实际上就是 <code>declare</code> 语法：</p>
-<pre><code class="lang-typescript">declare var f1: () =&gt; void;
+<pre><code class="lang-typescript">declare var f1: () =&gt; void
 
 declare interface Foo {
-  prop: string;
+  prop: string
 }
 
-declare function foo(input: Foo): Foo;
+declare function foo(input: Foo): Foo
 
 declare class Foo {}
 </code></pre>
 <p>我们可以直接访问这些声明：</p>
-<pre><code class="lang-typescript">declare let otherProp: Foo[&#39;prop&#39;];
+<pre><code class="lang-typescript">declare let otherProp: Foo[&#39;prop&#39;]
 </code></pre>
 <p>但不能为这些声明变量赋值：</p>
 <pre><code class="lang-typescript">// × 不允许在环境上下文中使用初始值
-declare let result = foo();
+declare let result = foo()
 
 // √ Foo
-declare let result: ReturnType&lt;typeof foo&gt;;
+declare let result: ReturnType&lt;typeof foo&gt;
 </code></pre>
 <p>这些类型声明就像我们在 TypeScript 中的类型标注一样，会存放着特定的类型信息，同时由于它们并不具有实际逻辑，我们可以很方便地使用类型声明来进行类型兼容性的比较、工具类型的声明与测试等等。</p>
 <p>除了手动书写这些声明文件，更常见的情况是你的 TypeScript 代码在编译后生成声明文件：</p>
 <pre><code class="lang-typescript">// 源代码
 const handler = (input: string): boolean =&gt; {
-  return input.length &gt; 5;
+  return input.length &gt; 5
 }
 
 interface Foo {
-  name: string;
-  age: number;
+  name: string
+  age: number
 }
 
 const foo: Foo = {
-  name: &quot;林不渡&quot;,
-  age: 18
+  name: &#39;林不渡&#39;,
+  age: 18,
 }
 
 class FooCls {
-  prop!: string;
+  prop!: string
 }
 </code></pre>
 <p>这段代码在编译后会生成一个 <code>.js</code> 文件和一个 <code>.d.ts</code> 文件，而后者即是类型声明文件：</p>
 <pre><code class="lang-typescript">// 生成的类型定义
-declare const handler: (input: string) =&gt; boolean;
+declare const handler: (input: string) =&gt; boolean
 
 interface Foo {
-    name: string;
-    age: number;
+  name: string
+  age: number
 }
 
-declare const foo: Foo;
+declare const foo: Foo
 
 declare class FooCls {
-    prop: string;
+  prop: string
 }
 </code></pre>
 <p>这样一来，如果别的文件或是别的项目导入了这段代码，它们就能够从这些类型声明获得对应部分的类型，这也是类型声明的核心作用：<strong>将类型独立于 <code>.js</code> 文件进行存储</strong>。别人在使用你的代码时，就能够获得这些额外的类型信息。同时，如果你在使用别人没有携带类型声明的 <code>.js</code> 文件，也可以通过类型声明进行类型补全，我们在后面还会了解更多。</p>
@@ -133,39 +135,39 @@ declare class FooCls {
 <p>这些问题都可以通过类型声明来解决，这也是它的核心能力：<strong>通过额外的类型声明文件，在核心代码文件以外去提供对类型的进一步补全</strong>。类型声明文件，即 <code>.d.ts</code> 结尾的文件，它会自动地被 TS 加载到环境中，实现对应部分代码的类型补全。</p>
 <p>声明文件中并不包含实际的代码逻辑，它做的事只有一件：<strong>为 TypeScript 类型检查与推导提供额外的类型信息</strong>，而使用的语法仍然是 TypeScript 的 declare 关键字，只不过现在我们要进一步学习其它打开方式了。</p>
 <p>要详细学习声明文件与 declare 关键字，我们不妨先来看看如何解决上面的问题。首先是无类型定义的 npm 包，我们可以通过 declare module 的方式来提供其类型：</p>
-<pre><code class="lang-typescript">import foo from &#39;pkg&#39;;
+<pre><code class="lang-typescript">import foo from &#39;pkg&#39;
 
-const res = foo.handler();
+const res = foo.handler()
 </code></pre>
 <p>这里的 pkg 是一个没有类型定义的 npm 包（实际并不存在），我们来看如何为它添加类型提示。</p>
 <pre><code class="lang-typescript">declare module &#39;pkg&#39; {
-  const handler: () =&gt; boolean;
+  const handler: () =&gt; boolean
 }
 </code></pre>
 <p>现在我们的 res 就具有了 boolean 类型！<code>declare module &#39;pkg&#39;</code> 会为默认导入 <code>foo</code> 添加一个具有 handler 的类型，虽然这里的 <code>pkg</code> 根本不存在。我们也可以在 <code>declare module</code> 中使用默认导出：</p>
 <pre><code class="lang-typescript">declare module &#39;pkg2&#39; {
-  const handler: () =&gt; boolean;
-  export default handler;
+  const handler: () =&gt; boolean
+  export default handler
 }
 
-import bar from &#39;pkg2&#39;;
+import bar from &#39;pkg2&#39;
 
-bar();
+bar()
 </code></pre>
 <blockquote>
 <p>在 <code>&#39;pkg&#39;</code> 的类型声明中，你也可以使用 <code>export const</code> ，效果是一致的，但由于对 <code>&#39;pkg2&#39;</code> 我们使用了默认导入，因此必须要有一个 <code>export default</code>。</p>
 </blockquote>
-<p>除了为缺失类型的模块声明类型以外，使用类型声明我们还可以为非代码文件，如图片、CSS文件等声明类型。</p>
+<p>除了为缺失类型的模块声明类型以外，使用类型声明我们还可以为非代码文件，如图片、CSS 文件等声明类型。</p>
 <p>对于非代码文件，比如说 markdown 文件，假设我们希望导入一个 <code>.md</code> 文件，由于其本质和 npm 包一样是一条导入语句，因此我们可以类似地使用 declare module 语法：</p>
 <pre><code class="lang-typescript">// index.ts
-import raw from &#39;./note.md&#39;;
+import raw from &#39;./note.md&#39;
 
-const content = raw.replace(&#39;NOTE&#39;, `NOTE${new Date().getDay()}`);
+const content = raw.replace(&#39;NOTE&#39;, `NOTE${new Date().getDay()}`)
 
 // declare.d.ts
 declare module &#39;*.md&#39; {
-  const raw: string;
-  export default raw;
+  const raw: string
+  export default raw
 }
 </code></pre>
 <p>对于非代码文件的导入，更常见的其实是 <code>.css</code>、<code>.module.css</code>、<code>.png</code> 这一类，但基本语法都相似，我们在后面还会见到更多。</p>
@@ -174,19 +176,19 @@ declare module &#39;*.md&#39; {
 <p>举例来说，只要你安装了 <code>@types/react</code>，TypeScript 会自动将其加载到环境中（实际上所有 <code>@types/</code> 下的包都会自动被加载），并作为 react 模块内部 API 的声明。但这些类型定义并不一定都是通过 <code>declare module</code>，我们下面介绍的命名空间 namespace 其实也可以实现一样的能力。</p>
 <p>先来看 <code>@types/node</code> 中与 <code>@types/react</code> 中分别是如何进行类型声明的：</p>
 <pre><code class="lang-typescript">// @types/node
-declare module &#39;fs&#39; { 
-    export function readFileSync(/** 省略 */): Buffer;
+declare module &#39;fs&#39; {
+  export function readFileSync(/** 省略 */): Buffer
 }
 
 // @types/react
 declare namespace React {
-    function useState&lt;S&gt;(): [S, Dispatch&lt;SetStateAction&lt;S&gt;&gt;];
+  function useState&lt;S&gt;(): [S, Dispatch&lt;SetStateAction&lt;S&gt;&gt;]
 }
 </code></pre>
 <p>可以看到，<code>@types/node</code> 中仍然使用 <code>declare module</code> 的方式为 <code>fs</code> 这个内置模块声明了类型，而 <code>@types/react</code> 则使用的是我们没见过的 <code>declare namespace</code> 。别担心，我们会在后面详细介绍。</p>
 <p>回到上面的最后一个问题，如果第三方库并不是通过导出来使用，而是直接在全局注入了变量，如 CDN 引入与某些监控埋点 SDK 的引入，我们需要通过 <code>window.xxx</code> 的方式访问，而类型声明很显然并不存在。此时我们仍然可以通过类型声明，但不再是通过 <code>declare module</code> 了。</p>
 <h3 id="扩展已有的类型定义"><a href="#扩展已有的类型定义" class="headerlink" title="扩展已有的类型定义"></a>扩展已有的类型定义</h3><p>对全局变量的声明，还是以 window 为例，实际上我们如果 Ctrl + 点击代码中的 window，会发现它已经有类型声明了：</p>
-<pre><code class="lang-typescript">declare var window: Window &amp; typeof globalThis;
+<pre><code class="lang-typescript">declare var window: Window &amp; typeof globalThis
 
 interface Window {
   // ...
@@ -194,28 +196,28 @@ interface Window {
 </code></pre>
 <p>这行代码来自于 <code>lib.dom.d.ts</code> 文件，它定义了对浏览器文档对象模型的类型声明，这就是 TypeScript 提供的内置类型，也是“出厂自带”的类型检查能力的依据。类似的，还有内置的 <code>lib.es2021.d.ts</code> 这种文件定义了对 ECMAScript 每个版本的类型声明新增或改动等等。</p>
 <p>我们要做的，实际上就是在内置类型声明的基础之上，再新增一部分属性。而别忘了，在 JavaScript 中当你访问全局变量时，是可以直接忽略 <code>window</code> 的：</p>
-<pre><code class="lang-typescript">onerror = () =&gt; {};
+<pre><code class="lang-typescript">onerror = () =&gt; {}
 </code></pre>
 <p>反过来，在类型声明中，如果我们直接声明一个变量，那就相当于将它声明在了全局空间中：</p>
 <pre><code class="lang-typescript">// 类型声明
-declare const errorReporter: (err: any) =&gt; void;
+declare const errorReporter: (err: any) =&gt; void
 
 // 实际使用
-errorReporter(&quot;err!&quot;);
+errorReporter(&#39;err!&#39;)
 </code></pre>
 <p>而如果我们就是想将它显式的添加到已有的 <code>Window</code> 接口中呢？在接口一节中我们其实已经了解到，如果你有多个同名接口，那么<strong>这些接口实际上是会被合并的</strong>，这一特性在类型声明中也是如此。因此，我们再声明一个 Window 接口即可：</p>
 <pre><code class="lang-typescript">interface Window {
-  userTracker: (...args: any[]) =&gt; Promise&lt;void&gt;;
+  userTracker: (...args: any[]) =&gt; Promise&lt;void&gt;
 }
 
-window.userTracker(&quot;click!&quot;)
+window.userTracker(&#39;click!&#39;)
 </code></pre>
 <p>类似的，我们也可以扩展来自 <code>@types/</code> 包的类型定义：</p>
 <pre><code class="lang-typescript">declare module &#39;fs&#39; {
-  export function bump(): void;
+  export function bump(): void
 }
 
-import { bump } from &#39;fs&#39;;
+import { bump } from &#39;fs&#39;
 </code></pre>
 <p>总结一下这两个部分，TypeScript 通过 DefinitelyTyped ，也就是 <code>@types/</code> 系列的 npm 包来为无类型定义的 JavaScript npm 包提供类型支持，这些类型定义 的 npm 包内部其实就是数个 <code>.d.ts</code> 这样的声明文件。</p>
 <p>而这些声明文件主要通过 declare / namespace 的语法进行类型的描述，我们可以通过项目内额外的声明文件，来实现为非代码文件的导入，或者是全局变量添加上类型声明。而对于多个类型声明文件，如果我们想复用某一个已定义的类型呢？此时三斜线指令就该登场了。</p>
@@ -280,25 +282,21 @@ export namespace VirtualCurrency {
 <p>注意，这里的代码是在 <code>.ts</code> 文件中的，此时它是具有实际逻辑意义的，也不能和类型混作一谈。</p>
 </blockquote>
 <p>而命名空间的使用类似于枚举：</p>
-<pre><code class="lang-typescript">const weChatPaySDK = new RealCurrency.WeChatPaySDK();
+<pre><code class="lang-typescript">const weChatPaySDK = new RealCurrency.WeChatPaySDK()
 </code></pre>
 <p>唯一需要注意的是，命名空间内部实际上就像是一个独立的代码文件，因此其中的变量需要导出以后，才能通过 <code>RealCurrency.WeChatPaySDK</code> 这样的形式访问。</p>
 <p>如果你开始学习前端的时间较早，一定会觉得命名空间的编译产物很眼熟——它就像是上古时期里使用的伪模块化方案：</p>
-<pre><code class="lang-js">export var RealCurrency;
-(function (RealCurrency) {
-    class WeChatPaySDK {
-    }
-    RealCurrency.WeChatPaySDK = WeChatPaySDK;
-    class ALiPaySDK {
-    }
-    RealCurrency.ALiPaySDK = ALiPaySDK;
-    class MeiTuanPaySDK {
-    }
-    RealCurrency.MeiTuanPaySDK = MeiTuanPaySDK;
-    class CreditCardPaySDK {
-    }
-    RealCurrency.CreditCardPaySDK = CreditCardPaySDK;
-})(RealCurrency || (RealCurrency = {}));
+<pre><code class="lang-js">export var RealCurrency
+;(function (RealCurrency) {
+  class WeChatPaySDK {}
+  RealCurrency.WeChatPaySDK = WeChatPaySDK
+  class ALiPaySDK {}
+  RealCurrency.ALiPaySDK = ALiPaySDK
+  class MeiTuanPaySDK {}
+  RealCurrency.MeiTuanPaySDK = MeiTuanPaySDK
+  class CreditCardPaySDK {}
+  RealCurrency.CreditCardPaySDK = CreditCardPaySDK
+})(RealCurrency || (RealCurrency = {}))
 </code></pre>
 <p>实际上，命名空间的作用也正是实现简单的模块化功能，在 TypeScript 中引入它时（<a href="https://link.juejin.cn/?target=https%3A%2F%2Fwww.typescriptlang.org%2Fdocs%2Fhandbook%2Frelease-notes%2Ftypescript-1-5.html%23namespace-keyword">1.5 版本</a>），前端的模块化方案还处于混沌时期。</p>
 <p>命名空间的内部还可以再嵌套命名空间，比如在虚拟货币中再新增区块链货币一类，此时嵌套的命名空间也需要被导出：</p>
@@ -312,7 +310,7 @@ export namespace VirtualCurrency {
   }
 }
 
-const ethPaySDK = new VirtualCurrency.BlockChainCurrency.ETHPaySDK();
+const ethPaySDK = new VirtualCurrency.BlockChainCurrency.ETHPaySDK()
 </code></pre>
 <p>类似于类型声明中的同名接口合并，命名空间也可以进行合并，但需要通过三斜线指令来声明导入。</p>
 <pre><code class="lang-typescript">// animal.ts
@@ -343,7 +341,7 @@ namespace Animal {
 /// &lt;reference path=&quot;dog.ts&quot; /&gt;
 /// &lt;reference path=&quot;corgi.ts&quot; /&gt;
 
-Animal.Dog.Corgi.corgiBark();
+Animal.Dog.Corgi.corgiBark()
 </code></pre>
 <p>除了在 <code>.ts</code> 文件中使用以外，命名空间也可以在声明文件中使用，即 <code>declare namespace</code>：</p>
 <pre><code class="lang-typescript">declare namespace Animal {
@@ -352,15 +350,15 @@ Animal.Dog.Corgi.corgiBark();
   export interface Cat {}
 }
 
-declare let dog: Animal.Dog;
-declare let cat: Animal.Cat;
+declare let dog: Animal.Dog
+declare let cat: Animal.Cat
 </code></pre>
 <p>但如果你在 <code>@types/</code> 系列的包下，想要通过 namespace 进行模块的声明，还需要注意将其导出，然后才会加载到对应的模块下。以 <code>@types/react</code> 为例：</p>
-<pre><code class="lang-typescript">export = React;
-export as namespace React;
+<pre><code class="lang-typescript">export = React
+export as namespace React
 declare namespace React {
   // 省略了不必要的类型标注
-  function useState&lt;S&gt;(initialState): [];
+  function useState&lt;S&gt;(initialState): []
 }
 </code></pre>
 <p>首先我们声明了一个命名空间 React，然后使用 <code>export = React</code> 将它导出了，这样我们就能够在从 react 中导入方法时，获得命名空间内部的类型声明，如 useState。</p>
@@ -369,7 +367,7 @@ declare namespace React {
 <p>除了这两处 namespace 使用，React 中还利用 namespace 合并的特性，在全局的命名空间中注入了一些类型：</p>
 <pre><code class="lang-typescript">declare global {
   namespace JSX {
-    interface Element extends React.ReactElement&lt;any, any&gt; { }
+    interface Element extends React.ReactElement&lt;any, any&gt; {}
   }
 }
 </code></pre>
@@ -377,22 +375,22 @@ declare namespace React {
 <p>除了类型声明中的导入——三斜线指令，以及类型声明中的模块——命名空间以外，TypeScript 还允许你将这些类型去导入到代码文件中。</p>
 <h2 id="仅类型导入"><a href="#仅类型导入" class="headerlink" title="仅类型导入"></a>仅类型导入</h2><p>在 TypeScript 中，当我们导入一个类型时其实并不需要额外的操作，和导入一个实际值是完全一样的：</p>
 <pre><code class="lang-typescript">// foo.ts
-export const Foo = () =&gt; {};
+export const Foo = () =&gt; {}
 
-export type FooType = any;
+export type FooType = any
 
 // index.ts
-import { Foo, FooType } from &quot;./foo&quot;;
+import { Foo, FooType } from &#39;./foo&#39;
 </code></pre>
 <p>虽然类型导入和值导入存在于同一条导入语句中，在编译后的 JS 代码里还是只会有值导入存在，同时在编译的过程中，值与类型所在的内存空间也是分开的。</p>
 <p>在这里我们只能通过名称来区分值和类型，但为每一个类型都加一个 Type 后缀也太奇怪了。实际上，我们可以更好地区分值导入和类型导入，只需要通过 <code>import type</code> 语法即可：</p>
-<pre><code class="lang-typescript">import { Foo } from &quot;./foo&quot;;
-import type { FooType } from &quot;./foo&quot;;
+<pre><code class="lang-typescript">import { Foo } from &#39;./foo&#39;
+import type { FooType } from &#39;./foo&#39;
 </code></pre>
 <p>这样会造成导入语句数量激增，如果你想同时保持较少的导入语句数量又想区分值和类型导入，也可以使用同一导入语句内的方式（需要 4.6 版本以后才支持）：</p>
-<pre><code class="lang-typescript">import { Foo, type FooType } from &quot;./foo&quot;;
+<pre><code class="lang-typescript">import { Foo, type FooType } from &#39;./foo&#39;
 </code></pre>
-<p>这实际上是我个人编码习惯的一部分，即<strong>对导入语句块的规范整理</strong>。在大型项目中一个文件顶部有几十条导入语句是非常常见的，它们可能来自第三方库、UI库、项目内工具方法、样式文件、类型，项目内工具方法可能又分成 constants、hooks、utils、config 等等。如果将这些所有类型的导入都混乱地堆放在一起，对于后续的维护无疑是灾难。因此，我通常会将这些导入按照实际意义进行组织，顺序大致是这样：</p>
+<p>这实际上是我个人编码习惯的一部分，即<strong>对导入语句块的规范整理</strong>。在大型项目中一个文件顶部有几十条导入语句是非常常见的，它们可能来自第三方库、UI 库、项目内工具方法、样式文件、类型，项目内工具方法可能又分成 constants、hooks、utils、config 等等。如果将这些所有类型的导入都混乱地堆放在一起，对于后续的维护无疑是灾难。因此，我通常会将这些导入按照实际意义进行组织，顺序大致是这样：</p>
 <ul>
 <li>一般最上面会是 React；</li>
 <li>第三方 UI 组件，然后是项目内封装的其他组件；</li>
@@ -401,20 +399,20 @@ import type { FooType } from &quot;./foo&quot;;
 <li>样式文件，<code>CSS-IN-JS</code> 方案的组件应该被放在第二条中其他组件部分。</li>
 </ul>
 <p>示例如下：</p>
-<pre><code class="lang-typescript">import { useEffect } from &#39;react&#39;;
+<pre><code class="lang-typescript">import { useEffect } from &#39;react&#39;
 
-import { Button, Dialog } from &#39;ui&#39;;
-import { ChildComp } from &#39;./child&#39;;
+import { Button, Dialog } from &#39;ui&#39;
+import { ChildComp } from &#39;./child&#39;
 
 import { store } from &#39;@/store&#39;
-import { useCookie } from &#39;@/hooks/useCookie&#39;;
-import { SOME_CONSTANTS } from &#39;@/utils/constants&#39;;
+import { useCookie } from &#39;@/hooks/useCookie&#39;
+import { SOME_CONSTANTS } from &#39;@/utils/constants&#39;
 
-import type { FC } from &#39;react&#39;;
-import type { Foo } from &#39;@/typings/foo&#39;;
-import type { Shared } from &#39;@/typings/shared&#39;;
+import type { FC } from &#39;react&#39;
+import type { Foo } from &#39;@/typings/foo&#39;
+import type { Shared } from &#39;@/typings/shared&#39;
 
-import styles from &#39;./index.module.scss&#39;;
+import styles from &#39;./index.module.scss&#39;
 </code></pre>
 <h2 id="总结与预告"><a href="#总结与预告" class="headerlink" title="总结与预告"></a>总结与预告</h2><p>在这一节，我们主要了解了 TypeScript 在工程层面的基础能力，包括<strong>类型指令</strong>、<strong>类型声明</strong>、<strong>命名空间</strong>三个部分。</p>
 <p>类型声明相关的能力几乎是所有规模的工程都会使用到的（你总会遇到没有提供类型定义的库吧），通过大量的额外类型声明我们可以实现更复杂、更准确的类型保护，以及为上古时期的 JavaScript npm 包提供类型定义，即 DefinitelyTyped。但类型指令却相反，它绝对不应该被滥用，无论是相当于后门的 <code>ts-ignore</code> 还是稍显安全的 <code>ts-expect-error</code> 。我们会在后面介绍如何通过 ESLint 规则来进行对应地约束。</p>
@@ -423,20 +421,20 @@ import styles from &#39;./index.module.scss&#39;;
 <h2 id="扩展阅读"><a href="#扩展阅读" class="headerlink" title="扩展阅读"></a>扩展阅读</h2><h3 id="通过-JSDoc-在-JS-文件中获得类型提示"><a href="#通过-JSDoc-在-JS-文件中获得类型提示" class="headerlink" title="通过 JSDoc 在 JS 文件中获得类型提示"></a>通过 JSDoc 在 JS 文件中获得类型提示</h3><p>在上面我们提到了可以在 JS 文件中通过 JSDoc 来标注变量类型，而既然有了类型标注，那么自然也能享受到像 TS 文件中一样的类型提示了。但这里我们需要使用更强大一些的 JSDoc 能力：在 <code>@type {}</code> 中使用导入语句！</p>
 <p>以拥有海量配置项的 Webpack 为例：</p>
 <pre><code class="lang-javascript">/** @type {import(&quot;webpack&quot;).Configuration} */
-const config = {};
+const config = {}
 
-module.exports = config;
+module.exports = config
 </code></pre>
 <p>此时你会发现已经拥有了如臂使指的类型提示：</p>
 <p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3074e724e8ef48f9ba02fae7e2c70b71~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp" alt="img"></p>
 <p>类似的，也可以直接进行导出：</p>
-<pre><code class="lang-javascript">module.exports = /** @type { import(&#39;webpack&#39;).Configuration } */ ({});
+<pre><code class="lang-javascript">module.exports = /** @type { import(&#39;webpack&#39;).Configuration } */ ({})
 </code></pre>
 <p>当然，Webpack 本身也支持通过 ts 文件进行配置，在使用 TS 进行配置时，一种方式是简单地使用它提供的类型作为一个对象的标注。而目前更常见的一种方式其实是框架内部提供 <code>defineConfig</code> 这样的方法，让你能直接获得类型提示，如 Vite 中的做法：</p>
 <pre><code class="lang-typescript">import { defineConfig } from &#39;vite&#39;
 import react from &#39;@vitejs/plugin-react&#39;
 
 export default defineConfig({
-  plugins: [react()]
+  plugins: [react()],
 })
 </code></pre>

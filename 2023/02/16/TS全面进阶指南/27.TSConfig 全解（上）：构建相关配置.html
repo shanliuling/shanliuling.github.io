@@ -1,69 +1,96 @@
-<p>在前面的内容中，我们已经学习了 TypeScript 在工程中的许多实践，包括类型声明、TypeScript 与 React、ESLint 的结合使用以及装饰器等。这些实践更像是上层建筑，默认是在一个已经基本配置完环境的 TypeScript 项目中进行的。这一节，我们深入下层基础，来了解 TypeScript 工程中最基础的一部分：TSConfig 配置。</p>
+<hr>
+<p>title: 27.TSConfig 全解（上）：构建相关配置<br>date: 2023-02-16 16:29:28<br>tags: TypeScript<br>updated: 更新日期<br>cover:<br>description: TS全面进阶指南<br>categories: TS全面进阶指南<br>highlight_shrink: false</p>
+<h2 id="index-false"><a href="#index-false" class="headerlink" title="index: false"></a>index: false</h2><p>在前面的内容中，我们已经学习了 TypeScript 在工程中的许多实践，包括类型声明、TypeScript 与 React、ESLint 的结合使用以及装饰器等。这些实践更像是上层建筑，默认是在一个已经基本配置完环境的 TypeScript 项目中进行的。这一节，我们深入下层基础，来了解 TypeScript 工程中最基础的一部分：TSConfig 配置。</p>
 <p>为什么选择现在才讲配置呢？因为在前面的工程实践中，我们并不需要自己去修改 TSConfig，脚手架已经帮我们处理好了。有了实践经验，再来讲解讲解这些配置效果会更好。</p>
 <p>为了避免罗列配置这种填鸭式教学，我将 TSConfig 分为三个大类：<strong>构建相关</strong>、<strong>类型检查相关</strong>以及<strong>工程相关</strong>。这其实也对应着我们的开发流程：使用工程能力进行项目开发，检查源码是否符合配置约束，然后才是输出产物。每一个大类又可以划分为几个小类，比如构建相关又可以分为<strong>构建源码相关</strong>与<strong>构建产物相关</strong>等等，我们会按照这些分类的方式进行聚合地讲解。</p>
 <p>最后，正如我对这本小册的定位也包括工具书一样，当你在实际项目开发遗忘了某一项具体配置的作用，或者发现某一配置表现不符合预期，都可以回到这里来寻找答案。</p>
 <p>这一节我们主要介绍构建相关的配置。</p>
 <h2 id="构建相关"><a href="#构建相关" class="headerlink" title="构建相关"></a>构建相关</h2><h3 id="构建源码相关"><a href="#构建源码相关" class="headerlink" title="构建源码相关"></a>构建源码相关</h3><h4 id="特殊语法相关"><a href="#特殊语法相关" class="headerlink" title="特殊语法相关"></a>特殊语法相关</h4><h5 id="experimentalDecorators-与-emitDecoratorMetadata"><a href="#experimentalDecorators-与-emitDecoratorMetadata" class="headerlink" title="experimentalDecorators 与 emitDecoratorMetadata"></a>experimentalDecorators 与 emitDecoratorMetadata</h5><p>这两个选项都和装饰器有关，其中 experimentalDecorators 选项用于启用装饰器的 <code>@</code> 语法，而 emitDecoratorMetadata 配置则影响装饰器实际运行时的元数据相关逻辑，我们在装饰器一节中已经了解了此选项对实际编译代码的作用：</p>
-<pre><code class="lang-javascript">var __metadata = (this &amp;&amp; this.__metadata) || function (k, v) {
-    if (typeof Reflect === &quot;object&quot; &amp;&amp; typeof Reflect.metadata === &quot;function&quot;) return Reflect.metadata(k, v);
-};
+<pre><code class="lang-javascript">var __metadata =
+  (this &amp;&amp; this.__metadata) ||
+  function (k, v) {
+    if (typeof Reflect === &#39;object&#39; &amp;&amp; typeof Reflect.metadata === &#39;function&#39;)
+      return Reflect.metadata(k, v)
+  }
 
-__decorate([
+__decorate(
+  [
     Prop(),
-    __metadata(&quot;design:type&quot;, String) // 来自于 emitDecoratorMetadata 配置，其它 __metadata 方法同
-], Foo.prototype, &quot;prop&quot;, void 0);
+    __metadata(&#39;design:type&#39;, String), // 来自于 emitDecoratorMetadata 配置，其它 __metadata 方法同
+  ],
+  Foo.prototype,
+  &#39;prop&#39;,
+  void 0
+)
 
-__decorate([
+__decorate(
+  [
     Method(),
     __param(0, Param()),
-    __metadata(&quot;design:type&quot;, Function),
-    __metadata(&quot;design:paramtypes&quot;, [String]),
-    __metadata(&quot;design:returntype&quot;, void 0)
-], Foo.prototype, &quot;handler&quot;, null);
+    __metadata(&#39;design:type&#39;, Function),
+    __metadata(&#39;design:paramtypes&#39;, [String]),
+    __metadata(&#39;design:returntype&#39;, void 0),
+  ],
+  Foo.prototype,
+  &#39;handler&#39;,
+  null
+)
 
-Foo = __decorate([
-    Cls(),
-    __param(0, Param()),
-    __metadata(&quot;design:paramtypes&quot;, [String])
-], Foo);
+Foo = __decorate(
+  [Cls(), __param(0, Param()), __metadata(&#39;design:paramtypes&#39;, [String])],
+  Foo
+)
 </code></pre>
 <h5 id="jsx、jsxFactory、jsxFragmentFactory-与-jsxImportSource"><a href="#jsx、jsxFactory、jsxFragmentFactory-与-jsxImportSource" class="headerlink" title="jsx、jsxFactory、jsxFragmentFactory 与 jsxImportSource"></a>jsx、jsxFactory、jsxFragmentFactory 与 jsxImportSource</h5><p>这部分配置主要涉及 jsx(tsx) 相关的语法特性。其中，jsx 配置将直接影响 JSX 组件的构建表现，常见的主要有 <code>react</code> （将 JSX 组件转换为对 <code>React.createElement</code> 调用，生成 <code>.js</code> 文件）、<code>preserve</code>（原样保留 JSX 组件，生成 <code>.jsx</code> 文件，你可以接着让其他的编译器进行处理）、<code>react-native</code> （类似于 preserve，但会生成 <code>.js</code> 文件）。</p>
 <p>如果你希望使用特殊的 jsx 转换，也可以将其配置为 <code>react-jsx</code> / <code>react-jsxdev</code>，这样 JSX 组件会被转换为对 <code>__jsx</code> 方法的调用与生成 <code>.js</code> 文件，此方法来自于 <code>react/jsx-runtime</code>。</p>
 <pre><code class="lang-jsx">// react
-import React from &#39;react&#39;;
-export const helloWorld = () =&gt; React.createElement(&quot;h1&quot;, null, &quot;Hello world&quot;);
+import React from &#39;react&#39;
+export const helloWorld = () =&gt; React.createElement(&#39;h1&#39;, null, &#39;Hello world&#39;)
 
 // preserve / react-native
-import React from &#39;react&#39;;
-export const helloWorld = () =&gt; &lt;h1&gt;Hello world&lt;/h1&gt;;
+import React from &#39;react&#39;
+export const helloWorld = () =&gt; &lt;h1&gt;Hello world&lt;/h1&gt;
 
 // react-jsx
-import { jsx as _jsx } from &quot;react/jsx-runtime&quot;;
-import React from &#39;react&#39;;
-export const helloWorld = () =&gt; _jsx(&quot;h1&quot;, { children: &quot;Hello world&quot; });
+import { jsx as _jsx } from &#39;react/jsx-runtime&#39;
+import React from &#39;react&#39;
+export const helloWorld = () =&gt; _jsx(&#39;h1&#39;, { children: &#39;Hello world&#39; })
 
 // react-jsxdev
-import { jsxDEV as _jsxDEV } from &quot;react/jsx-dev-runtime&quot;;
-const _jsxFileName = &quot;/home/runner/work/TypeScript-Website/TypeScript-Website/index.tsx&quot;;
-import React from &#39;react&#39;;
-export const helloWorld = () =&gt; _jsxDEV(&quot;h1&quot;, { children: &quot;Hello world&quot; }, void 0, false, { fileName: _jsxFileName, lineNumber: 9, columnNumber: 32 }, this);
+import { jsxDEV as _jsxDEV } from &#39;react/jsx-dev-runtime&#39;
+const _jsxFileName =
+  &#39;/home/runner/work/TypeScript-Website/TypeScript-Website/index.tsx&#39;
+import React from &#39;react&#39;
+export const helloWorld = () =&gt;
+  _jsxDEV(
+    &#39;h1&#39;,
+    { children: &#39;Hello world&#39; },
+    void 0,
+    false,
+    { fileName: _jsxFileName, lineNumber: 9, columnNumber: 32 },
+    this
+  )
 </code></pre>
 <p>除了 jsx 以外，其它 jsx 相关配置使用较少，我们简单了解即可。</p>
 <ul>
 <li><p>jsxFactory，影响负责最终处理转换完毕 JSX 组件的方法，默认即为 <code>React.createElement</code>。如果你想使用 <code>preact.h</code> 作为处理方法，可以将其配置为 <code>h</code>。</p>
 </li>
 <li><p>jsxFragmentFactory，类似 jsxFactory，只不过它影响的是 Fragment 组件（<code>&lt;&gt;&lt;/&gt;</code>）的提供方。jsxFactory 与 jsxFragmentFactory 均是 TS 4.1 版本以前用于实现自定义 JSX 转换的配置项，举例来说，当设置了 <code>&quot;jsx&quot;: &quot;react&quot;</code>，此时将 jsxFragmentFactory 设置为 <code>Fragment</code> ，同时将 jsxFactory 设置为 <code>h</code>：</p>
-<pre><code class="lang-jsx">import { h, Fragment } from &quot;preact&quot;;
+<pre><code class="lang-jsx">import { h, Fragment } from &#39;preact&#39;
 const HelloWorld = () =&gt; (
   &lt;&gt;
     &lt;div&gt;Hello&lt;/div&gt;
   &lt;/&gt;
-);
+)
 
 // 转换为以下代码
-const preact_1 = require(&quot;preact&quot;);
-const HelloWorld = () =&gt; ((0, preact_1.h)(preact_1.Fragment, null,
-    (0, preact_1.h)(&quot;div&quot;, null, &quot;Hello&quot;)));
+const preact_1 = require(&#39;preact&#39;)
+const HelloWorld = () =&gt;
+  (0, preact_1.h)(
+    preact_1.Fragment,
+    null,
+    (0, preact_1.h)(&#39;div&#39;, null, &#39;Hello&#39;)
+  )
 </code></pre>
 <p>为了简化自定义 JSX 转换的配置，4.1 版本以后 TS 支持使用 jsxImportSource 属性快速地调整。</p>
 </li>
@@ -72,17 +99,17 @@ const HelloWorld = () =&gt; ((0, preact_1.h)(preact_1.Fragment, null,
 </ul>
 <p>这也是 React 17 中的变化之一，在 17 版本前后的构建后代码如下：</p>
 <pre><code class="lang-js">// v17 前
-import React from &#39;react&#39;;
+import React from &#39;react&#39;
 
 function App() {
-  return React.createElement(&#39;h1&#39;, null, &#39;Hello world&#39;);
+  return React.createElement(&#39;h1&#39;, null, &#39;Hello world&#39;)
 }
 
 // v17 后
-import {jsx as _jsx} from &#39;react/jsx-runtime&#39;;
+import { jsx as _jsx } from &#39;react/jsx-runtime&#39;
 
 function App() {
-  return _jsx(&#39;h1&#39;, { children: &#39;Hello world&#39; });
+  return _jsx(&#39;h1&#39;, { children: &#39;Hello world&#39; })
 }
 </code></pre>
 <p>这也是在 17 版本以后，不需要再确保代码中导入了 React 就能使用 JSX 的原因。</p>
@@ -90,7 +117,7 @@ function App() {
 <p>类似的，在 Babel 中也有 targets 的概念。但这里的 targets 通常指的是预期运行的浏览器，如 chrome 89，然后基于 browserlist 获取浏览器信息，基于 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fcaniuse.com%2F">caniuse</a> 或者 compat-table 获取各个浏览器版本支持的特性，最后再进行语法的降级。</p>
 <p>如果没有特殊需要，推荐将 target 设置为 <code>&quot;es2018&quot;</code>，一个对常用语法支持较为全面的版本。</p>
 <p>更改 target 配置也会同时影响你的 lib 配置默认值，而它决定了你是否能使用某些来自于更新版本的 ECMAScript 语法，以 replaceAll 为例，如果你直接在项目中使用：</p>
-<pre><code class="lang-typescript">&#39;linbudu&#39;.replaceAll(&#39;d&#39;, &#39;dd&#39;);
+<pre><code class="lang-typescript">&#39;linbudu&#39;.replaceAll(&#39;d&#39;, &#39;dd&#39;)
 </code></pre>
 <p>此时，如果你的 lib 配置中不包含 <code>&quot;es2021&quot;</code> 或者 <code>&quot;es2021.String&quot;</code>，上面的代码就会给出一个错误提示：<strong><em>属性“replaceAll”在类型“”linbudu””上不存在。是否需要更改目标库? 请尝试将 “lib” 编译器选项更改为“es2021”或更高版本</em></strong>。</p>
 <p>正如我们在类型声明一节中了解的，TypeScript 会自动加载内置的 <code>lib.d.ts</code> 等声明文件，而加载哪些文件则和 lib 配置有关。当我们配置了 <code>&quot;es2021&quot;</code> 或者 <code>&quot;es2021.String&quot;</code>，replaceAll 方法对应的声明文件 <code>lib.es2021.string.d.ts</code> 就会被加载，然后我们的 String 类型上才有了 lib 方法。</p>
@@ -102,10 +129,7 @@ function App() {
 <h4 id="files、include-与-exclude"><a href="#files、include-与-exclude" class="headerlink" title="files、include 与 exclude"></a>files、include 与 exclude</h4><p>这三个选项决定了将被包括到本次编译的代码文件。使用 files 我们可以描述本次包含的所有文件，但不能使用 <code>src</code> 或者 <code>src/*</code> 这种方式，每个值都需要是完整的文件路径，适合在小型项目时使用：</p>
 <pre><code class="lang-json">{
   &quot;compilerOptions&quot;: {},
-  &quot;files&quot;: [
-    &quot;src/index.ts&quot;,
-    &quot;src/handler.ts&quot;
-  ]
+  &quot;files&quot;: [&quot;src/index.ts&quot;, &quot;src/handler.ts&quot;]
 }
 </code></pre>
 <p>如果你的文件数量较多，或者分散在各个文件夹，此时可以使用 include 和 exclude 进行配置，在这里可以传入文件夹或者 <code>src/*</code> 这样的 glob pattern，也可以传入完整的文件路径。</p>
@@ -114,7 +138,7 @@ function App() {
   &quot;include&quot;: [&quot;src/**/*&quot;, &quot;generated/*.ts&quot;, &quot;internal/*&quot;]
 }
 </code></pre>
-<p>其中，<code>src/**/*</code> 表示匹配 src下所有的合法文件，而无视目录层级。而 <code>internal/*</code> 则只会匹配 internal 下的文件，不会匹配 <code>internal/utils/</code> 下的文件。这里的合法文件指的是，在不包括文件扩展名（<code>*.ts</code>）的情况下只会匹配 <code>.ts</code> / <code>.tsx</code> / <code>.d.ts</code> / <code>.js</code> / <code>.jsx</code> 文件（js 和 jsx 文件需要启用 allowJs 配置时才会被包括）。</p>
+<p>其中，<code>src/**/*</code> 表示匹配 src 下所有的合法文件，而无视目录层级。而 <code>internal/*</code> 则只会匹配 internal 下的文件，不会匹配 <code>internal/utils/</code> 下的文件。这里的合法文件指的是，在不包括文件扩展名（<code>*.ts</code>）的情况下只会匹配 <code>.ts</code> / <code>.tsx</code> / <code>.d.ts</code> / <code>.js</code> / <code>.jsx</code> 文件（js 和 jsx 文件需要启用 allowJs 配置时才会被包括）。</p>
 <p>由于我们会在 include 中大量使用 glob pattern 来一次性匹配许多文件，如果存在某些非预期的文件也符合这一匹配模式，比如 <code>src/handler.test.ts</code> <code>src/file-excluded/</code> 这样，此时专门为需要匹配的文件书写精确的匹配模式就太麻烦了。因此，我们可以使用 exclude 配置，来从被 include 匹配到的文件中再移除一部分，如：</p>
 <pre><code class="lang-json">{
   &quot;include&quot;: [&quot;src/**/*&quot;, &quot;generated/*.ts&quot;, &quot;internal/*&quot;],
@@ -131,7 +155,7 @@ function App() {
 </code></pre>
 <p>在这个结构下，如果配置为 <code>&quot;baseUrl&quot;: &quot;./&quot;</code>，根目录就会被确定为 project。</p>
 <p>你也可以通过这一配置，在导入语句中使用相对 baseUrl 的解析路径。如在上面根目录已经确定为 project，在 <code>out.ts</code> 中，你就可以直接使用基于根目录的绝对路径导入文件：</p>
-<pre><code class="lang-typescript">import &quot;src/core&quot;; // TS 会自动解析到对应的文件，即 &quot;./src/core.ts&quot;
+<pre><code class="lang-typescript">import &#39;src/core&#39; // TS 会自动解析到对应的文件，即 &quot;./src/core.ts&quot;
 </code></pre>
 <h4 id="rootDir"><a href="#rootDir" class="headerlink" title="rootDir"></a>rootDir</h4><p>rootDir 配置决定了项目文件的根目录，默认情况下它是项目内<strong>包括</strong>的所有 .ts 文件的最长公共路径，这里有几处需要注意：</p>
 <ul>
@@ -254,7 +278,11 @@ PROJECT
 <p>如果你甚至希望改变加载 <code>@types/</code> 下文件的行为，可以使用 typeRoots 选项，其默认为 <code>@types</code>，即指定 <code>node_modules/@types</code> 下的所有文件（仍然包括嵌套的）。</p>
 <pre><code class="lang-json">{
   &quot;compilerOptions&quot;: {
-    &quot;typeRoots&quot;: [&quot;./node_modules/@types&quot;, &quot;./node_modules/@team-types&quot;, &quot;./typings&quot;],
+    &quot;typeRoots&quot;: [
+      &quot;./node_modules/@types&quot;,
+      &quot;./node_modules/@team-types&quot;,
+      &quot;./typings&quot;
+    ],
     &quot;types&quot;: [&quot;react&quot;],
     &quot;skipLibCheck&quot;: true
   }
@@ -268,13 +296,13 @@ PROJECT
 <li><p><code>/&lt;root&gt;/&lt;project&gt;/src/foo.js</code> 文件是否存在？</p>
 </li>
 <li><pre><code>/&lt;root&gt;/&lt;project&gt;/src/foo
-</code></pre></li>
-</ul>
-<p>  是否是一个文件夹？</p>
+</code></pre><p>是否是一个文件夹？</p>
 <ul>
 <li>此文件夹内部是否包含 <code>package.json</code>，且其中使用 <code>main</code> 属性描述了这个文件夹的入口文件？</li>
 <li>假设 <code>main</code> 指向 <code>dist/index.js</code>，那这里会尝试寻找 <code>/&lt;root&gt;/&lt;project&gt;/src/foo/dist/index.js</code> 文件</li>
 <li>否则的话，说明这个文件不是一个模块或者没有定义模块入口，我们走默认的 <code>/foo/index.js</code> 。</li>
+</ul>
+</li>
 </ul>
 <p>而对于绝对路径，即 <code>const foo = require(&quot;foo&quot;)</code>，其只会在 <code>node_modules</code> 中寻找，从 <code>/&lt;root&gt;/&lt;project&gt;/src/node_modules</code> 开始，到 <code>/&lt;root&gt;/&lt;project&gt;/node_modules</code> ，再逐级向上直到根目录。</p>
 <p>TypeScript 在这基础上增加了对 <code>.ts</code> <code>.tsx</code> 和 <code>.d.ts</code> （优先级按照这一顺序）扩展名的文件解析，以及对 <code>package.json</code> 中 <code>types</code> 字段的加载。</p>
@@ -289,9 +317,9 @@ PROJECT
 <p>绝大部分情况下你不会需要 classic 作为配置值，这里仅做了解即可。</p>
 <h4 id="moduleSuffixes"><a href="#moduleSuffixes" class="headerlink" title="moduleSuffixes"></a>moduleSuffixes</h4><p>此配置在 4.7 版本被引入，类似于 moduleResolution ，它同样影响对模块的解析策略，但仅影响模块的后缀名部分。如以下配置：</p>
 <pre><code class="lang-json">{
-    &quot;compilerOptions&quot;: {
-        &quot;moduleSuffixes&quot;: [&quot;.ios&quot;, &quot;.native&quot;, &quot;&quot;]
-    }
+  &quot;compilerOptions&quot;: {
+    &quot;moduleSuffixes&quot;: [&quot;.ios&quot;, &quot;.native&quot;, &quot;&quot;]
+  }
 }
 </code></pre>
 <p>此配置在解析文件时，会首先尝试查找 <code>foo.ios.ts</code>，然后是 <code>foo.native.ts</code>，最后才是 <code>foo.ts</code>（注意，需要最后的空字符串<code>&quot;&quot;</code>配置）。很明显，这一配置主要是为了 React Native 配置中的多平台构建配置。但你可以用它在 Angular 项目中，确保所有文件都使用了一个额外的后缀名，如 <code>user.service.ts</code>、<code>user.module.ts</code> 等。</p>
@@ -349,39 +377,43 @@ src
 <p>在同样能实现语法降级的 Babel 中，这一功能是通过 core-js （原<code>@babel/polyfill</code>） 实现的。在 TypeScript 中这些辅助函数被统一封装在了 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2Ftslib">tslib</a> 中，通过启用 importHelpers 配置，这些辅助函数就将从 tslib 中导出而不是在源码中定义，能够有效地帮助减少构建产物体系。</p>
 <p>举例来说，ES 6 中引入的 rest 操作符，在降低情况下会编译为这样的产物：</p>
 <pre><code class="lang-js">export function fn(arr: number[]) {
-  const arr2 = [1, ...arr];
+  const arr2 = [1, ...arr]
 }
-var __read = (this &amp;&amp; this.__read) || function (o, n) {
-   // ...
-};
-var __spreadArray = (this &amp;&amp; this.__spreadArray) || function (to, from, pack) {
+var __read =
+  (this &amp;&amp; this.__read) ||
+  function (o, n) {
     // ...
-};
+  }
+var __spreadArray =
+  (this &amp;&amp; this.__spreadArray) ||
+  function (to, from, pack) {
+    // ...
+  }
 export function fn(arr) {
-    var arr2 = __spreadArray([1], __read(arr), false);
+  var arr2 = __spreadArray([1], __read(arr), false)
 }
 </code></pre>
 <p>在启用 importHelpers 后，辅助函数 <code>__read</code> 和 <code>__spreadArray</code> 都将从 tslib 中导出：</p>
-<pre><code class="lang-js">import { __read, __spreadArray } from &quot;tslib&quot;;
+<pre><code class="lang-js">import { __read, __spreadArray } from &#39;tslib&#39;
 export function fn(arr) {
-    var arr2 = __spreadArray([1], __read(arr), false);
+  var arr2 = __spreadArray([1], __read(arr), false)
 }
 </code></pre>
 <p>如果你希望使用自己的实现，而非完全从 tslib 中导出，就可以使用 noEmitHelpers 配置，在开启时源码中仍然会使用这些辅助函数，不会存在从 tslib 中导入的过程。因此，此时需要你在全局命名空间下来提供同名的实现。</p>
 <h5 id="downlevelIteration"><a href="#downlevelIteration" class="headerlink" title="downlevelIteration"></a>downlevelIteration</h5><p>ES6 新增了 <code>for...of</code> 循环，它可以用于循环遍历所有部署了 <code>[Symbol.iterator]</code> 接口的数据结构，如数组、Set、Map，甚至还包括字符串。</p>
 <p>在默认情况下，如果 target 为 ES5 或更低，<code>for...of</code> 循环会被降级为普通的基于索引的 for 循环：</p>
 <pre><code class="lang-js">// 源代码
-const str = &quot;Hello!&quot;;
+const str = &#39;Hello!&#39;
 for (const s of str) {
-  console.log(s);
+  console.log(s)
 }
 
 // 降级
-&quot;use strict&quot;;
-var str = &quot;Hello!&quot;;
+;(&#39;use strict&#39;)
+var str = &#39;Hello!&#39;
 for (var _i = 0, str_1 = str; _i &lt; str_1.length; _i++) {
-    var s = str_1[_i];
-    console.log(s);
+  var s = str_1[_i]
+  console.log(s)
 }
 </code></pre>
 <p>然而在某些情况下，降级到普通的 for 循环可能造成运行结果不一致，比如一个 emoji 字符在 <code>for...of</code> 循环中只会被遍历一次，而其实际 length 为 2，因此在 for 循环中会被拆开来分别遍历 2 次。</p>
@@ -390,19 +422,19 @@ for (var _i = 0, str_1 = str; _i &lt; str_1.length; _i++) {
 <h5 id="importsNotUsedAsValues-与-preserveValueImports"><a href="#importsNotUsedAsValues-与-preserveValueImports" class="headerlink" title="importsNotUsedAsValues 与 preserveValueImports"></a>importsNotUsedAsValues 与 preserveValueImports</h5><p>默认情况下，TypeScript 就在编译时去抹除仅类型导入（import type），但如果你希望保留这些类型导入语句，可以通过更改 importsNotUsedAsValues 配置的值来改变其行为。默认情况下，此配置的值为 remove，即对仅类型导入进行抹除。你也可以将其更改为 preserve，这样所有的导入语句都会被导入（但是类型变量仍然会被抹除）。或者是 error，在这种情况下首先所有导入语句仍然会被保留，但会在值导入仅被用于类型时产生一个错误。</p>
 <p>举例来说，以下代码中的仅类型导入会在 preserve 或 error 时保留：</p>
 <pre><code class="lang-typescript">// foo.ts
-export type FooType = any;
+export type FooType = any
 
-init();
+init()
 
 // index.ts
-import type { FooType } from &quot;./foo&quot;;
-import {} from &quot;./foo&quot;;
+import type { FooType } from &#39;./foo&#39;
+import {} from &#39;./foo&#39;
 </code></pre>
 <p>这样 foo 文件中的 <code>init()</code>也就是副作用，仍然能够得到执行。</p>
 <p>类似的，还有一个控制导入语句构建产物的配置，preserveValueImports。它主要针对的是值导入（即非类型导入或混合导入），这是因为在某些时候我们的值导入可能是通过一些奇怪的方式使用的：</p>
-<pre><code class="lang-js">import { Animal } from &quot;./animal&quot;;
+<pre><code class="lang-js">import { Animal } from &#39;./animal&#39;
 
-eval(&quot;console.log(new Animal().isDangerous())&quot;);
+eval(&#39;console.log(new Animal().isDangerous())&#39;)
 </code></pre>
 <p>preserveValueImports 配置会将所有的值导入都保留下来，</p>
 <p>如果你使用 Babel 等无法处理类型的编译器来构建 TS 代码（即启用了 isolatedModules 配置），由于它们并不知道这里到底是值导入还是类型导入，所以此时你必须将类型导入显式标记出来：</p>
@@ -430,10 +462,10 @@ import type { AnimalKind } from &quot;./animal;
 <li><p>removeComments，移除所有 TS 文件的注释，默认启用。</p>
 </li>
 <li><p>stripInternal 这一选项会阻止为被标记为 internal 的代码语句生成对应的类型，即被 JSDoc 标记为 <code>@internal</code>。推荐的做法是为仅在内部使用而没有导出的变量或方法进行标记，来减少生成代码的体积。</p>
-<pre><code class="lang-typescript">  /**
-   * @internal
-   */
-  const SECRET_KEY = &quot;LINBUDU&quot;;
+<pre><code class="lang-typescript">/**
+ * @internal
+ */
+const SECRET_KEY = &#39;LINBUDU&#39;
 </code></pre>
 <p>以上这段代码不会生成对应的类型声明。</p>
 </li>

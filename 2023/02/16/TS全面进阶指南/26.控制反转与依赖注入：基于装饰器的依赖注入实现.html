@@ -1,4 +1,6 @@
-<p>上一节学习了装饰器与反射元数据的基本使用后，这一节我们将在其基础上来了解<strong>控制反转</strong>、<strong>依赖注入</strong>等概念，我们会使用装饰器配合反射元数据实现这一设计模式，以及实现基于装饰器的路由体系与一个简单的控制反转容器。</p>
+<hr>
+<p>title: 26.控制反转与依赖注入：基于装饰器的依赖注入实现<br>date: 2023-02-16 16:29:28<br>tags: TypeScript<br>updated: 更新日期<br>cover:<br>description: TS全面进阶指南<br>categories: TS全面进阶指南<br>highlight_shrink: false</p>
+<h2 id="index-false"><a href="#index-false" class="headerlink" title="index: false"></a>index: false</h2><p>上一节学习了装饰器与反射元数据的基本使用后，这一节我们将在其基础上来了解<strong>控制反转</strong>、<strong>依赖注入</strong>等概念，我们会使用装饰器配合反射元数据实现这一设计模式，以及实现基于装饰器的路由体系与一个简单的控制反转容器。</p>
 <blockquote>
 <p>本节代码见：<a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Flinbudu599%2FTypeScript-Tiny-Book%2Ftree%2Fmain%2Fpackages%2F21-decorators">Decorators</a></p>
 </blockquote>
@@ -7,13 +9,13 @@
 <p>由于控制反转出现的时间较晚，因而没有被包括在四人组的设计模式一书当中，但它仍然是一种设计模式。</p>
 </blockquote>
 <p>假设我们存在多个具有依赖关系的类，可能会想当然这么写：</p>
-<pre><code class="lang-typescript">import { A } from &#39;./modA&#39;;
-import { B } from &#39;./modB&#39;;
+<pre><code class="lang-typescript">import { A } from &#39;./modA&#39;
+import { B } from &#39;./modB&#39;
 
 class C {
   constructor() {
-    this.a = new A();
-    this.b = new B();
+    this.a = new A()
+    this.b = new B()
   }
 }
 </code></pre>
@@ -21,7 +23,7 @@ class C {
 <p>而控制反转模式则能够很好地解决这一问题，它引入了一个容器的概念，内部自动地维护了这些类的依赖关系，当我们需要一个类的时候，它会帮我们把这个类内部依赖的实例都填充好，我们直接用就行：</p>
 <pre><code class="lang-typescript">class F {
   constructor() {
-    this.d = Container.get(D);
+    this.d = Container.get(D)
   }
 }
 </code></pre>
@@ -37,7 +39,7 @@ class C {
 
 class F {
   constructor() {
-    this.d = Factory.produce(&quot;D&quot;);
+    this.d = Factory.produce(&#39;D&#39;)
   }
 }
 </code></pre>
@@ -45,7 +47,7 @@ class F {
 <pre><code class="lang-typescript">@Provide()
 class F {
   @Inject()
-  d: D;
+  d: D
 }
 </code></pre>
 <p>可以看到这里我们不需要手动进行赋值，只需要声明这个属性，然后使用装饰器标明它需要被注入一个值即可。</p>
@@ -84,23 +86,23 @@ export const methodDecoratorFactory = (method: string) =&gt; {
   return (path: string): MethodDecorator =&gt; {
     return (_target, _key, descriptor) =&gt; {
       // 在方法实现上注册 ioc:method - 请求方法 的元数据
-      Reflect.defineMetadata(METADATA_KEY.METHOD, method, descriptor.value!);
+      Reflect.defineMetadata(METADATA_KEY.METHOD, method, descriptor.value!)
       // 在方法实现上注册 ioc:path - 请求路径 的元数据
-      Reflect.defineMetadata(METADATA_KEY.PATH, path, descriptor.value!);
-    };
-  };
-};
+      Reflect.defineMetadata(METADATA_KEY.PATH, path, descriptor.value!)
+    }
+  }
+}
 
-export const Get = methodDecoratorFactory(REQUEST_METHOD.GET);
-export const Post = methodDecoratorFactory(REQUEST_METHOD.POST);
+export const Get = methodDecoratorFactory(REQUEST_METHOD.GET)
+export const Post = methodDecoratorFactory(REQUEST_METHOD.POST)
 </code></pre>
 <p>这样一来，<code>@Get(&quot;/list&quot;)</code> 其实就是注册了 <code>ioc:method - ioc:get</code>，<code>ioc:path - &quot;list&quot;</code> 这样的两对元数据，分别标识了请求方法与请求路径。需要注意的是，我们是在方法体上去注册的，这样在最终处理时，可以<strong>通过这个类的原型拿到方法体</strong>，继而获得注册的元数据。</p>
 <p>Controller 中就简单一些了，我们只需要拿到它的请求路径信息，然后拼接在这个类中所有请求方法的请求路径前即可：</p>
 <pre><code class="lang-typescript">export const Controller = (path?: string): ClassDecorator =&gt; {
   return (target) =&gt; {
-    Reflect.defineMetadata(METADATA_KEY.PATH, path ?? &#39;&#39;, target);
-  };
-};
+    Reflect.defineMetadata(METADATA_KEY.PATH, path ?? &#39;&#39;, target)
+  }
+}
 </code></pre>
 <p>在最后信息组装时，我们需要做这么几步：</p>
 <ul>
@@ -109,44 +111,44 @@ export const Post = methodDecoratorFactory(REQUEST_METHOD.POST);
 <li>在原型对象上基于方法名获得方法体，继而拿到定义的请求路径、请求方法、请求实现</li>
 </ul>
 <p>来看实际代码：</p>
-<pre><code class="lang-typescript">type AsyncFunc = (...args: any[]) =&gt; Promise&lt;any&gt;;
+<pre><code class="lang-typescript">type AsyncFunc = (...args: any[]) =&gt; Promise&lt;any&gt;
 
 interface ICollected {
-  path: string;
-  requestMethod: string;
-  requestHandler: AsyncFunc;
+  path: string
+  requestMethod: string
+  requestHandler: AsyncFunc
 }
 
 export const routerFactory = &lt;T extends object&gt;(ins: T): ICollected[] =&gt; {
-  const prototype = Reflect.getPrototypeOf(ins) as any;
+  const prototype = Reflect.getPrototypeOf(ins) as any
 
   const rootPath = &lt;string&gt;(
     Reflect.getMetadata(METADATA_KEY.PATH, prototype.constructor)
-  );
+  )
 
   const methods = &lt;string[]&gt;(
     Reflect.ownKeys(prototype).filter((item) =&gt; item !== &#39;constructor&#39;)
-  );
+  )
 
   const collected = methods.map((m) =&gt; {
-    const requestHandler = prototype[m];
-    const path = &lt;string&gt;Reflect.getMetadata(METADATA_KEY.PATH, requestHandler);
+    const requestHandler = prototype[m]
+    const path = &lt;string&gt;Reflect.getMetadata(METADATA_KEY.PATH, requestHandler)
 
     const requestMethod = &lt;string&gt;(
       Reflect.getMetadata(METADATA_KEY.METHOD, requestHandler).replace(
         &#39;ioc:&#39;,
         &#39;&#39;
       )
-    );
+    )
 
     return {
       path: `${rootPath}${path}`,
       requestMethod,
       requestHandler,
-    };
-  });
-  return collected;
-};
+    }
+  })
+  return collected
+}
 </code></pre>
 <p>对于开始我们给出的路由使用方法，收集到的最终信息是这样的：</p>
 <pre><code class="lang-json">[
@@ -163,14 +165,14 @@ export const routerFactory = &lt;T extends object&gt;(ins: T): ICollected[] =&gt
 ]
 </code></pre>
 <p>现在我们就要来使用一个真正的 Node 服务来检验一下了，直接使用内置的 HTTP 模块启动一个服务器：</p>
-<pre><code class="lang-typescript">import http from &#39;http&#39;;
+<pre><code class="lang-typescript">import http from &#39;http&#39;
 
 http
   .createServer((req, res) =&gt; {})
   .listen(3000)
   .on(&#39;listening&#39;, () =&gt; {
-    console.log(&#39;Server ready at http://localhost:3000 \n&#39;);
-  });
+    console.log(&#39;Server ready at http://localhost:3000 \n&#39;)
+  })
 </code></pre>
 <p>接下来我们需要做的，就是在 createServer 内去依据请求路径与请求方法调用对应的实现了。我们会遍历收集到的信息，查看是否有某一个对象的路径与请求方法都匹配上了，如果有，就调用这个方法返回：</p>
 <pre><code class="lang-typescript">http
@@ -181,18 +183,18 @@ http
         req.method === info.requestMethod.toLocaleUpperCase()
       ) {
         info.requestHandler().then((data) =&gt; {
-          res.writeHead(200, { &#39;Content-Type&#39;: &#39;application/json&#39; });
-          res.end(JSON.stringify(data));
-        });
+          res.writeHead(200, { &#39;Content-Type&#39;: &#39;application/json&#39; })
+          res.end(JSON.stringify(data))
+        })
       }
     }
   })
   .listen(3000)
   .on(&#39;listening&#39;, () =&gt; {
-    console.log(&#39;Server ready at http://localhost:3000 \n&#39;);
-    console.log(&#39;GET /user/list at http://localhost:3000/user/list \n&#39;);
-    console.log(&#39;POST /user/add at http://localhost:3000/user/add \n&#39;);
-  });
+    console.log(&#39;Server ready at http://localhost:3000 \n&#39;)
+    console.log(&#39;GET /user/list at http://localhost:3000/user/list \n&#39;)
+    console.log(&#39;POST /user/add at http://localhost:3000/user/add \n&#39;)
+  })
 </code></pre>
 <p>在 Controller 中新增简单的方法返回：</p>
 <pre><code class="lang-typescript">@Controller(&#39;/user&#39;)
@@ -212,7 +214,7 @@ class UserController {
           age: 28,
         },
       ],
-    };
+    }
   }
 
   @Post(&#39;/add&#39;)
@@ -220,7 +222,7 @@ class UserController {
     return {
       success: true,
       code: 10000,
-    };
+    }
   }
 }
 </code></pre>
@@ -233,53 +235,53 @@ class UserController {
 <pre><code class="lang-typescript">@Provide()
 class Driver {
   adapt(consumer: string) {
-    console.log(`\n === 驱动已生效于 ${consumer}！===\n`);
+    console.log(`\n === 驱动已生效于 ${consumer}！===\n`)
   }
 }
 
 @Provide()
 class Car {
   @Inject()
-  driver!: Driver;
+  driver!: Driver
 
   run() {
-    this.driver.adapt(&#39;Car&#39;);
+    this.driver.adapt(&#39;Car&#39;)
   }
 }
 
-const car = Container.get(Car);
+const car = Container.get(Car)
 
-car.run(); // 驱动已生效于 Car ！
+car.run() // 驱动已生效于 Car ！
 </code></pre>
 <p>先来梳理一下思路，要实现这么个效果，首先我们需要一个容器，即控制反转中提到的<strong>独立的控制方</strong>，我们的 Car 依赖于驱动 Driver，这个容器会帮我们完成 Driver 注入到 Car 内的操作。那这个容器如何知道有哪些类需要被提前实例化呢？我们使用一个 Provide 装饰器，被其标记的 Class 会自动被容器收集。然后在需要使用这些类实例的地方，使用 Inject 装饰器声明这里需要哪个实例，容器就会自动地将这个属性注入进来。</p>
 <p>这里有一个比较复杂的地方，在存储一个类和注入一个类时，我们需要有一个标识符，才能实现一一对应的注入方式。在上面的例子里我们的 Provide 和 Inject 装饰器都是使用无参数调用的，这样的话标识符从何而来？你可能会想到使用内置的元数据信息！的确是这样，但是为了降低学习成本，我们先来了解如何不使用元数据来实现这个 IoC 容器，也就是我们能够这么使用：</p>
 <pre><code class="lang-typescript">@Provide(&#39;DriverService&#39;)
 class Driver {
   adapt(consumer: string) {
-    console.log(`\n === 驱动已生效于 ${consumer}！===\n`);
+    console.log(`\n === 驱动已生效于 ${consumer}！===\n`)
   }
 }
 
 @Provide(&#39;Car&#39;)
 class Car {
   @Inject(&#39;DriverService&#39;)
-  driver!: Driver;
+  driver!: Driver
 
   run() {
-    this.driver.adapt(&#39;Car&#39;);
+    this.driver.adapt(&#39;Car&#39;)
   }
 }
 
-const car = Container.get&lt;Car&gt;(&#39;Car&#39;)!;
+const car = Container.get&lt;Car&gt;(&#39;Car&#39;)!
 
-car.run();
+car.run()
 </code></pre>
 <p>这样的话就就简单多了，我们只需要基于字符串来存储、查找、注入一个类就好了。</p>
 <p>首先我们创建一个容器，很明显，它需要一个 Map 来以字符串-类的方式存储这些信息，以及 get 与 set 方法：</p>
-<pre><code class="lang-typescript">type ClassStruct&lt;T = any&gt; = new (...args: any[]) =&gt; T;
+<pre><code class="lang-typescript">type ClassStruct&lt;T = any&gt; = new (...args: any[]) =&gt; T
 
 class Container {
-  private static services: Map&lt;string, ClassStruct&gt; = new Map();
+  private static services: Map&lt;string, ClassStruct&gt; = new Map()
 
   public static set(key: string, value: ClassStruct): void {}
 
@@ -292,21 +294,18 @@ class Container {
 <p>然后就像我们前面说的，Provide 和 Inject 装饰器需要进行存储与注入工作：</p>
 <pre><code class="lang-typescript">function Provide(key: string): ClassDecorator {
   return (Target) =&gt; {
-    Container.set(key, Target as unknown as ClassStruct);
-  };
+    Container.set(key, Target as unknown as ClassStruct)
+  }
 }
 
 function Inject(key: string): PropertyDecorator {
-  return (target, propertyKey) =&gt; {
-
-  };
+  return (target, propertyKey) =&gt; {}
 }
 </code></pre>
 <p>Provide 倒简单，但 Inject 就有些麻烦了，我们在前面提到属性装饰器是无法对类的属性进行操作的，因此我们这里只能使用委托的方式。也就是说，我们先告诉容器有哪些属性需要进行注入，以及需要注入的类的标识符，等我们从容器中去取这个类的时候，容器会帮我们处理这些。</p>
 <p>因此容器中需要再增加一个 Map，它的键与键值均为字符串类型：</p>
 <pre><code class="lang-typescript">class Container {
-  public static propertyRegistry: Map&lt;string, string&gt; = new Map();
-
+  public static propertyRegistry: Map&lt;string, string&gt; = new Map()
 }
 </code></pre>
 <p>这样在 Inject 中，我们需要做的就是注册信息：</p>
@@ -315,15 +314,15 @@ function Inject(key: string): PropertyDecorator {
     Container.propertyRegistry.set(
       `${target.constructor.name}:${String(propertyKey)}`,
       key
-    );
-  };
+    )
+  }
 }
 </code></pre>
 <p>需要注意的是，这里我们注册的是 <code>Car:driver</code> - <code>DriverService</code> 的形式，以此来同时保存这个属性所在的类名称。</p>
 <p>接下来，我们需要做的就是 get 与 set 方法了。set 方法简单，直接注册 services 就好：</p>
 <pre><code class="lang-typescript">class Container {
   public static set(key: string, value: ClassStruct): void {
-    Container.services.set(key, value);
+    Container.services.set(key, value)
   }
 }
 </code></pre>
@@ -336,37 +335,37 @@ function Inject(key: string): PropertyDecorator {
 </ul>
 <p>我们的大致实现如下：</p>
 <pre><code class="lang-typescript">class Container {
-    public static get&lt;T = any&gt;(key: ServiceKey): T | undefined {
+  public static get&lt;T = any&gt;(key: ServiceKey): T | undefined {
     // 检查是否注册
-    const Cons = Container.services.get(key);
+    const Cons = Container.services.get(key)
 
     if (!Cons) {
-      return undefined;
+      return undefined
     }
 
     // 实例化这个类
-    const ins = new Cons();
+    const ins = new Cons()
 
     // 遍历注册信息
     for (const info of Container.propertyRegistry) {
       // 注入标识符与要注入类的标识符
-      const [injectKey, serviceKey] = info;
+      const [injectKey, serviceKey] = info
       // 拆分为 Class 名与属性名
-      const [classKey, propKey] = injectKey.split(&#39;:&#39;);
+      const [classKey, propKey] = injectKey.split(&#39;:&#39;)
 
       // 如果不是这个类，就跳过
-      if (classKey !== Cons.name) continue;
+      if (classKey !== Cons.name) continue
 
       // 取出需要注入的类，这里拿到的是已经实例化的
-      const target = Container.get(serviceKey);
+      const target = Container.get(serviceKey)
 
       if (target) {
         // 赋值给对应的属性
-        ins[propKey] = target;
+        ins[propKey] = target
       }
     }
 
-    return ins;
+    return ins
   }
 }
 </code></pre>
@@ -377,10 +376,10 @@ function Inject(key: string): PropertyDecorator {
 <pre><code class="lang-typescript">@Provide()
 class Car {
   @Inject()
-  driver!: Driver;
+  driver!: Driver
 
   run() {
-    this.driver.adapt(&#39;Car&#39;);
+    this.driver.adapt(&#39;Car&#39;)
   }
 }
 </code></pre>
@@ -388,9 +387,9 @@ class Car {
 <h3 id="基于内置元数据实现"><a href="#基于内置元数据实现" class="headerlink" title="基于内置元数据实现"></a>基于内置元数据实现</h3><p>其实最难的一部分我们已经解决了，即如何存储并对应地进行注入，现在要做的不过是升级优化一下，支持在不传入标识符时使用内置元数据作为标识符。首先对 Provide 和 Inject 做改造：</p>
 <pre><code class="lang-typescript">function Provide(key?: string): ClassDecorator {
   return (Target) =&gt; {
-    Container.set(key ?? Target.name, Target as unknown as ClassStruct);
-    Container.set(Target, Target as unknown as ClassStruct);
-  };
+    Container.set(key ?? Target.name, Target as unknown as ClassStruct)
+    Container.set(Target, Target as unknown as ClassStruct)
+  }
 }
 
 function Inject(key?: string): PropertyDecorator {
@@ -398,8 +397,8 @@ function Inject(key?: string): PropertyDecorator {
     Container.propertyRegistry.set(
       `${target.constructor.name}:${String(propertyKey)}`,
       key ?? Reflect.getMetadata(&#39;design:type&#39;, target, propertyKey)
-    );
-  };
+    )
+  }
 }
 </code></pre>
 <blockquote>
@@ -409,19 +408,19 @@ function Inject(key?: string): PropertyDecorator {
 <p>对应的，为了支持使用 Class 作为标识符进行查找，在 Provide 装饰器中我们需要确保也使用 Class 作为标识符来存储一份：</p>
 <pre><code class="lang-typescript">function Provide(key?: string): ClassDecorator {
   return (Target) =&gt; {
-    Container.set(key ?? Target.name, Target as unknown as ClassStruct);
+    Container.set(key ?? Target.name, Target as unknown as ClassStruct)
     // 不论是否传入 key，都使用 Class 作为 key 注册一份
-    Container.set(Target, Target as unknown as ClassStruct);
-  };
+    Container.set(Target, Target as unknown as ClassStruct)
+  }
 }
 </code></pre>
 <p>然后就没了！我们并不需要修改 Container 的逻辑，只需要调整类型即可：</p>
-<pre><code class="lang-typescript">type ServiceKey&lt;T = any&gt; = string | ClassStruct&lt;T&gt; | Function;
+<pre><code class="lang-typescript">type ServiceKey&lt;T = any&gt; = string | ClassStruct&lt;T&gt; | Function
 
 class Container {
-  private static services: Map&lt;ServiceKey, ClassStruct&gt; = new Map();
+  private static services: Map&lt;ServiceKey, ClassStruct&gt; = new Map()
 
-  public static propertyRegistry: Map&lt;string, string&gt; = new Map();
+  public static propertyRegistry: Map&lt;string, string&gt; = new Map()
 
   public static set(key: ServiceKey, value: ClassStruct): void {}
 
@@ -433,56 +432,56 @@ class Container {
 <pre><code class="lang-typescript">@Provide(&#39;DriverService&#39;)
 class Driver {
   adapt(consumer: string) {
-    console.log(`\n === 驱动已生效于 ${consumer}！===\n`);
+    console.log(`\n === 驱动已生效于 ${consumer}！===\n`)
   }
 }
 
 @Provide()
 class Fuel {
   fill(consumer: string) {
-    console.log(`\n === 燃料已填充完毕 ${consumer}！===`);
+    console.log(`\n === 燃料已填充完毕 ${consumer}！===`)
   }
 }
 
 @Provide()
 class Car {
   @Inject()
-  driver!: Driver;
+  driver!: Driver
 
   @Inject()
-  fule!: Fuel;
+  fule!: Fuel
 
   run() {
-    this.fule.fill(&#39;Car&#39;);
-    this.driver.adapt(&#39;Car&#39;);
+    this.fule.fill(&#39;Car&#39;)
+    this.driver.adapt(&#39;Car&#39;)
   }
 }
 
 @Provide()
 class Bus {
   @Inject(&#39;DriverService&#39;)
-  driver!: Driver;
+  driver!: Driver
 
   @Inject(&#39;Fuel&#39;)
-  fule!: Fuel;
+  fule!: Fuel
 
   run() {
-    this.fule.fill(&#39;Bus&#39;);
-    this.driver.adapt(&#39;Bus&#39;);
+    this.fule.fill(&#39;Bus&#39;)
+    this.driver.adapt(&#39;Bus&#39;)
   }
 }
 
-const car = Container.get(Car)!;
-const bus = Container.get(Bus)!;
+const car = Container.get(Car)!
+const bus = Container.get(Bus)!
 
-car.run();
-bus.run();
+car.run()
+bus.run()
 </code></pre>
 <p><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/2ac6238730204b18b08c2f87cae66ce5~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?" alt="image.png"></p>
 <p>学习完这一节后，请你试着把上一部分的装饰器路由体系也基于这个简单的容器重新实现与改善，如新增对 Service 层与中间件层的注入：</p>
 <pre><code class="lang-typescript">// 如何设计入参？
 function logMiddleware() {
-    // 中间件逻辑在何时执行？
+  // 中间件逻辑在何时执行？
 }
 
 @Controller(&#39;/user&#39;)
@@ -492,34 +491,39 @@ class UserController {
   @Middleware(logMiddleware)
   @Get(&#39;/list&#39;)
   async userList() {
-    return await this.userService.all();
+    return await this.userService.all()
   }
 
   @Post(&#39;/add&#39;)
   async addUser(user: User) {
-    return await this.userService.create(user);
+    return await this.userService.create(user)
   }
 }
 </code></pre>
 <h2 id="总结与预告"><a href="#总结与预告" class="headerlink" title="总结与预告"></a>总结与预告</h2><p>在这两节，我们花了相当长的篇幅对装饰器相关的概念与实际应用进行了一次彻底介绍。从装饰器语法到不同类型装饰器的使用，再到反射、反射元数据，最后到控制反转与依赖注入，以及简单的 IoC 路由与 IoC 容器实现。这些概念可以帮助你在使用基于装饰器的工具库时，更加熟悉其底层的原理。同时，如果你想自己开发一些基于装饰器的工具库，这一节的内容也是一个不错的开始。</p>
 <p>在接下来两节，我们将投入另一个方面的实战：TSConfig 配置解析。如果你也曾对着一堆配置较劲半天，却没看出个所以然的经历，这一次可以放心了。我们将在下面两节全面解析大部分配置，包括每一条配置的作用、表现以及与它关联的配置们。</p>
 <h2 id="扩展阅读"><a href="#扩展阅读" class="headerlink" title="扩展阅读"></a>扩展阅读</h2><h3 id="类型严格的装饰器"><a href="#类型严格的装饰器" class="headerlink" title="类型严格的装饰器"></a>类型严格的装饰器</h3><p>在这一节的代码中，我们并没有特别关注类型的严格性。实际上装饰器的类型定义也是如此：</p>
-<pre><code class="lang-typescript">declare type ClassDecorator = &lt;TFunction extends Function&gt;(target: TFunction) =&gt; TFunction | void;
-declare type PropertyDecorator = (target: Object, propertyKey: string | symbol) =&gt; void;
+<pre><code class="lang-typescript">declare type ClassDecorator = &lt;TFunction extends Function&gt;(
+  target: TFunction
+) =&gt; TFunction | void
+declare type PropertyDecorator = (
+  target: Object,
+  propertyKey: string | symbol
+) =&gt; void
 </code></pre>
 <p>这些类型定义使用的是非常宽泛的类型， 并没有进行对应的约束。而如果将这些类型进行约束，实际上我们就可以实现一个类型严格的装饰器。如我们希望装饰器 <code>@OnlyFoo</code> 只能在 Foo 及其子类上应用，此时就可以通过约束 target 的类型实现：</p>
-<pre><code class="lang-typescript">type ClassStruct&lt;T = any&gt; = new (...args: any[]) =&gt; T;
+<pre><code class="lang-typescript">type ClassStruct&lt;T = any&gt; = new (...args: any[]) =&gt; T
 
 type RestrictedClassDecorator&lt;TClass extends object&gt; = (
   target: ClassStruct&lt;TClass&gt;
-) =&gt; ClassStruct&lt;TClass&gt; | void;
+) =&gt; ClassStruct&lt;TClass&gt; | void
 
 function OnlyFoo(): RestrictedClassDecorator&lt;Foo&gt; {
-  return (target: ClassStruct&lt;Foo&gt;) =&gt; {};
+  return (target: ClassStruct&lt;Foo&gt;) =&gt; {}
 }
 
 function OnlyBar(): RestrictedClassDecorator&lt;Bar&gt; {
-  return (target: ClassStruct&lt;Bar&gt;) =&gt; {};
+  return (target: ClassStruct&lt;Bar&gt;) =&gt; {}
 }
 </code></pre>
 <p>来实际使用一下：</p>
@@ -527,32 +531,32 @@ function OnlyBar(): RestrictedClassDecorator&lt;Bar&gt; {
 // 装饰器函数返回类型“void | ClassStruct&lt;Bar&gt;”不可分配到类型“void | typeof Foo”
 @OnlyBar()
 class Foo {
-  foo!: string;
+  foo!: string
 }
 
 @OnlyFoo()
 class DerivedFoo extends Foo {
-  foo!: string;
+  foo!: string
 }
 
 // 装饰器函数返回类型“void | ClassStruct&lt;Foo&gt;”不可分配到类型“void | typeof Bar”。
 @OnlyFoo()
 @OnlyBar()
 class Bar {
-  bar!: string;
+  bar!: string
 }
 </code></pre>
 <p>类似的，我们还可以实现约束方法装饰器只能在同步或异步函数上调用：</p>
-<pre><code class="lang-typescript">type AsyncFunc = (...args: any[]) =&gt; Promise&lt;any&gt;;
+<pre><code class="lang-typescript">type AsyncFunc = (...args: any[]) =&gt; Promise&lt;any&gt;
 
 type OnlyAsyncMethodDecorator = (
   target: Object,
   propertyKey: string | symbol,
   descriptor: TypedPropertyDescriptor&lt;AsyncFunc&gt;
-) =&gt; void;
+) =&gt; void
 
 function OnlyAsyncFunc(): OnlyAsyncMethodDecorator {
-  return (target, propKey, descriptor) =&gt; {};
+  return (target, propKey, descriptor) =&gt; {}
 }
 
 class Foo {
@@ -565,38 +569,35 @@ class Foo {
 }
 </code></pre>
 <p>以及属性装饰器只用应用在特定类型的属性上：</p>
-<pre><code class="lang-typescript">type LiteralPropertyDecorator = (
-  target: Object,
-  propertyKey: &#39;linbudu&#39;
-) =&gt; void;
+<pre><code class="lang-typescript">type LiteralPropertyDecorator = (target: Object, propertyKey: &#39;linbudu&#39;) =&gt; void
 
 function OnlyLiteralProperty(): LiteralPropertyDecorator {
-  return (target, propertyKey) =&gt; {};
+  return (target, propertyKey) =&gt; {}
 }
 
 type PickByValueType&lt;T, Value&gt; = {
-  [Key in keyof T]: T[Key] extends Value ? Key : never;
-}[keyof T];
+  [Key in keyof T]: T[Key] extends Value ? Key : never
+}[keyof T]
 
 type StringTypePropertyDecorator = &lt;T extends object&gt;(
   target: T,
   propertyKey: PickByValueType&lt;T, string&gt;
-) =&gt; void;
+) =&gt; void
 
 function OnlyStringTypeProperty(): StringTypePropertyDecorator {
-  return (target, propertyKey) =&gt; {};
+  return (target, propertyKey) =&gt; {}
 }
 
 class Foo {
   @OnlyStringTypeProperty()
-  str!: string;
+  str!: string
 
   // 类型“&quot;bool&quot;”的参数不能赋给类型“PickByValueType&lt;Foo, string&gt;”的参数。
   @OnlyStringTypeProperty()
-  bool: boolean = true;
+  bool: boolean = true
 
   @OnlyLiteralProperty()
-  linbudu!: &#39;linbudu&#39;;
+  linbudu!: &#39;linbudu&#39;
 }
 </code></pre>
 <p>这里比较巧妙的是，由于我们只能获取到被装饰的属性名，无法直接获取到其类型，因此通过此前我们学习过的 PickByValueType 工具类型，将这个类上所有符合类型的属性名都提取了出来（作为字面量类型），然后使用这一字面量类型作为类型约束。</p>

@@ -1,9 +1,11 @@
-<blockquote>
+<hr>
+<p>title: 4.掌握字面量类型与枚举，让你的类型再精确一些<br>date: 2023-02-16 16:29:28<br>tags: TypeScript<br>updated: 更新日期<br>cover:<br>description: TS全面进阶指南<br>categories: TS全面进阶指南<br>highlight_shrink: false</p>
+<h2 id="index-false"><a href="#index-false" class="headerlink" title="index: false"></a>index: false</h2><blockquote>
 <p>了解了原始类型与对象类型以后，我们已经能完成简单场景的类型标注了。但这还远远不够，我们还可以让这些类型标注更精确一些。比如，有一个接口结构，它描述了响应的消息结构：</p>
 <pre><code class="lang-typescript">interface IRes {
-  code: number;
-  status: string;
-  data: any;
+  code: number
+  status: string
+  data: any
 }
 </code></pre>
 <p>在大多数情况下，这里的 code 与 status 实际值会来自于一组确定值的集合，比如 code 可能是 10000 / 10001 / 50000，status 可能是 <code>&quot;success&quot;</code> / <code>&quot;failure&quot;</code>。而上面的类型只给出了一个宽泛的 number（string），此时我们既不能在访问 code 时获得精确的提示，也失去了 TypeScript 类型即文档的功能。</p>
@@ -13,9 +15,9 @@
 </blockquote>
 <h2 id="字面量类型与联合类型"><a href="#字面量类型与联合类型" class="headerlink" title="字面量类型与联合类型"></a>字面量类型与联合类型</h2><p>我们可以使用联合类型加上字面量类型，把上面的例子改写成这样：</p>
 <pre><code class="lang-typescript">interface Res {
-  code: 10000 | 10001 | 50000;
-  status: &quot;success&quot; | &quot;failure&quot;;
-  data: any;
+  code: 10000 | 10001 | 50000
+  status: &#39;success&#39; | &#39;failure&#39;
+  data: any
 }
 </code></pre>
 <p>这个时候，我们就能在访问时获得精确地类型推导了。</p>
@@ -23,23 +25,23 @@
 <p>对于 <code>declare var res: Res</code>，你可以认为它其实就是快速生成一个符合指定类型，但没有实际值的变量，同时它也不存在于运行时中。上面引入了一些新的概念，我们来一个一个了解。</p>
 <h2 id="字面量类型"><a href="#字面量类型" class="headerlink" title="字面量类型"></a>字面量类型</h2><p>最开始你可能觉得很神奇，<code>&quot;success&quot;</code> 不是一个值吗？为什么它也可以作为类型？在 TypeScript 中，这叫做<strong>字面量类型（Literal Types）</strong>，它代表着比原始类型更精确的类型，同时也是原始类型的子类型（关于类型层级，我们会在后面详细了解）。</p>
 <p>字面量类型主要包括<strong>字符串字面量类型</strong>、<strong>数字字面量类型</strong>、<strong>布尔字面量类型</strong>和<strong>对象字面量类型</strong>，它们可以直接作为类型标注：</p>
-<pre><code class="lang-typescript">const str: &quot;linbudu&quot; = &quot;linbudu&quot;;
-const num: 599 = 599;
-const bool: true = true;
+<pre><code class="lang-typescript">const str: &#39;linbudu&#39; = &#39;linbudu&#39;
+const num: 599 = 599
+const bool: true = true
 </code></pre>
 <p>为什么说字面量类型比原始类型更精确？我们可以看这么个例子：</p>
 <pre><code class="lang-typescript">// 报错！不能将类型“&quot;linbudu599&quot;”分配给类型“&quot;linbudu&quot;”。
-const str1: &quot;linbudu&quot; = &quot;linbudu599&quot;;
+const str1: &#39;linbudu&#39; = &#39;linbudu599&#39;
 
-const str2: string = &quot;linbudu&quot;;
-const str3: string = &quot;linbudu599&quot;;
+const str2: string = &#39;linbudu&#39;
+const str3: string = &#39;linbudu599&#39;
 </code></pre>
 <p>上面的代码，原始类型的值可以包括任意的同类型值，而字面量类型要求的是<strong>值级别的字面量一致</strong>。</p>
 <p>单独使用字面量类型比较少见，因为单个字面量类型并没有什么实际意义。它通常和联合类型（即这里的 <code>|</code>）一起使用，表达一组字面量类型：</p>
 <pre><code class="lang-typescript">interface Tmp {
-  bool: true | false;
-  num: 1 | 2 | 3;
-  str: &quot;lin&quot; | &quot;bu&quot; | &quot;du&quot;
+  bool: true | false
+  num: 1 | 2 | 3
+  str: &#39;lin&#39; | &#39;bu&#39; | &#39;du&#39;
 }
 </code></pre>
 <h3 id="联合类型"><a href="#联合类型" class="headerlink" title="联合类型"></a>联合类型</h3><p>而联合类型你可以理解为，它代表了<strong>一组类型的可用集合</strong>，只要最终赋值的类型属于联合类型的成员之一，就可以认为符合这个联合类型。联合类型对其成员并没有任何限制，除了上面这样对同一类型字面量的联合，我们还可以将各种类型混合到一起：</p>
@@ -53,45 +55,45 @@ const str3: string = &quot;linbudu599&quot;;
 <li>函数类型并不存在字面量类型，因此这里的 <code>(() =&gt; {})</code> 就是一个合法的函数类型</li>
 <li>你可以在联合类型中进一步嵌套联合类型，但这些嵌套的联合类型最终都会被展平到第一级中</li>
 </ul>
-<p>联合类型的常用场景之一是通过多个对象类型的联合，来实现手动的互斥属性，即这一属性如果有字段1，那就没有字段2：</p>
+<p>联合类型的常用场景之一是通过多个对象类型的联合，来实现手动的互斥属性，即这一属性如果有字段 1，那就没有字段 2：</p>
 <pre><code class="lang-typescript">interface Tmp {
   user:
     | {
-        vip: true;
-        expires: string;
+        vip: true
+        expires: string
       }
     | {
-        vip: false;
-        promotion: string;
-      };
+        vip: false
+        promotion: string
+      }
 }
 
-declare var tmp: Tmp;
+declare var tmp: Tmp
 
 if (tmp.user.vip) {
-  console.log(tmp.user.expires);
+  console.log(tmp.user.expires)
 }
 </code></pre>
 <p>在这个例子中，user 属性会满足普通用户与 VIP 用户两种类型，这里 vip 属性的类型基于布尔字面量类型声明。我们在实际使用时可以通过判断此属性为 true ，确保接下来的类型推导都会将其类型收窄到 VIP 用户的类型（即联合类型的第一个分支）。这一能力的使用涉及类型守卫与类型控制流分析，我们会在后面的章节详细来说。</p>
 <p>我们也可以通过类型别名来复用一组字面量联合类型：</p>
-<pre><code class="lang-typescript">type Code = 10000 | 10001 | 50000;
+<pre><code class="lang-typescript">type Code = 10000 | 10001 | 50000
 
-type Status = &quot;success&quot; | &quot;failure&quot;;
+type Status = &#39;success&#39; | &#39;failure&#39;
 </code></pre>
 <p>除了原始类型的字面量类型以外，对象类型也有着对应的字面量类型。</p>
 <h3 id="对象字面量类型"><a href="#对象字面量类型" class="headerlink" title="对象字面量类型"></a>对象字面量类型</h3><p>类似的，对象字面量类型就是一个对象类型的值。当然，这也就意味着这个对象的值全都为字面量值：</p>
 <pre><code class="lang-typescript">interface Tmp {
   obj: {
-    name: &quot;linbudu&quot;,
+    name: &#39;linbudu&#39;
     age: 18
   }
 }
 
 const tmp: Tmp = {
   obj: {
-    name: &quot;linbudu&quot;,
-    age: 18
-  }
+    name: &#39;linbudu&#39;,
+    age: 18,
+  },
 }
 </code></pre>
 <p>如果要实现一个对象字面量类型，意味着完全的实现这个类型每一个属性的每一个值。对象字面量类型在实际开发中的使用较少，我们只需要了解。</p>
@@ -101,51 +103,51 @@ const tmp: Tmp = {
 <h2 id="枚举"><a href="#枚举" class="headerlink" title="枚举"></a>枚举</h2><p>枚举并不是 JavaScript 中原生的概念，在其他语言中它都是老朋友了（Java、C#、Swift 等）。目前也已经存在给 JavaScript（ECMAScript）引入枚举支持的 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Frbuckton%2Fproposal-enum">proposal-enum</a> 提案，但还未被提交给 TC39 ，仍处于 Stage 0 阶段。</p>
 <p>如果要和 JavaScript 中现有的概念对比，我想最贴切的可能就是你曾经写过的 constants 文件了：</p>
 <pre><code class="lang-javascript">export default {
-  Home_Page_Url: &quot;url1&quot;,
-  Setting_Page_Url: &quot;url2&quot;,
-  Share_Page_Url: &quot;url3&quot;,
+  Home_Page_Url: &#39;url1&#39;,
+  Setting_Page_Url: &#39;url2&#39;,
+  Share_Page_Url: &#39;url3&#39;,
 }
 
 // 或是这样：
 export const PageUrl = {
-  Home_Page_Url: &quot;url1&quot;,
-  Setting_Page_Url: &quot;url2&quot;,
-  Share_Page_Url: &quot;url3&quot;,
+  Home_Page_Url: &#39;url1&#39;,
+  Setting_Page_Url: &#39;url2&#39;,
+  Share_Page_Url: &#39;url3&#39;,
 }
 </code></pre>
 <p>如果把这段代码替换为枚举，会是如下的形式：</p>
 <pre><code class="lang-typescript">enum PageUrl {
-  Home_Page_Url = &quot;url1&quot;,
-  Setting_Page_Url = &quot;url2&quot;,
-  Share_Page_Url = &quot;url3&quot;,
+  Home_Page_Url = &#39;url1&#39;,
+  Setting_Page_Url = &#39;url2&#39;,
+  Share_Page_Url = &#39;url3&#39;,
 }
 
-const home = PageUrl.Home_Page_Url;
+const home = PageUrl.Home_Page_Url
 </code></pre>
 <p>这么做的好处非常明显。首先，你拥有了更好的类型提示。其次，这些常量被真正地<strong>约束在一个命名空间</strong>下（上面的对象声明总是差点意思）。如果你没有声明枚举的值，它会默认使用数字枚举，并且从 0 开始，以 1 递增：</p>
 <pre><code class="lang-typescript">enum Items {
   Foo,
   Bar,
-  Baz
+  Baz,
 }
 </code></pre>
 <p>在这个例子中，<code>Items.Foo</code> , <code>Items.Bar</code> , <code>Items.Baz</code>的值依次是 0，1，2 。</p>
 <p>如果你只为某一个成员指定了枚举值，那么之前未赋值成员仍然会使用从 0 递增的方式，之后的成员则会开始从枚举值递增。</p>
 <pre><code class="lang-typescript">enum Items {
-  // 0 
+  // 0
   Foo,
   Bar = 599,
   // 600
-  Baz
+  Baz,
 }
 </code></pre>
 <p>在数字型枚举中，你可以使用延迟求值的枚举值，比如函数：</p>
-<pre><code class="lang-typescript">const returnNum = () =&gt; 100 + 499;
+<pre><code class="lang-typescript">const returnNum = () =&gt; 100 + 499
 
 enum Items {
   Foo = returnNum(),
   Bar = 599,
-  Baz
+  Baz,
 }
 </code></pre>
 <p>但要注意，延迟求值的枚举值是有条件的。<strong>如果你使用了延迟求值，那么没有使用延迟求值的枚举成员必须放在使用常量枚举值声明的成员之后（如上例），或者放在第一位</strong>：</p>
@@ -158,57 +160,57 @@ enum Items {
 <p>TypeScript 中也可以同时使用字符串枚举值和数字枚举值：</p>
 <pre><code class="lang-typescript">enum Mixed {
   Num = 599,
-  Str = &quot;linbudu&quot;
+  Str = &#39;linbudu&#39;,
 }
 </code></pre>
 <p>枚举和对象的重要差异在于，<strong>对象是单向映射的</strong>，我们只能从键映射到键值。而<strong>枚举是双向映射的</strong>，即你可以从枚举成员映射到枚举值，也可以从枚举值映射到枚举成员：</p>
 <pre><code class="lang-typescript">enum Items {
   Foo,
   Bar,
-  Baz
+  Baz,
 }
 
-const fooValue = Items.Foo; // 0
-const fooKey = Items[0]; // &quot;Foo&quot;
+const fooValue = Items.Foo // 0
+const fooKey = Items[0] // &quot;Foo&quot;
 </code></pre>
 <p>要了解这一现象的本质，我们需要来看一看枚举的编译产物，如以上的枚举会被编译为以下 JavaScript 代码：</p>
-<pre><code class="lang-typescript">&quot;use strict&quot;;
-var Items;
-(function (Items) {
-    Items[Items[&quot;Foo&quot;] = 0] = &quot;Foo&quot;;
-    Items[Items[&quot;Bar&quot;] = 1] = &quot;Bar&quot;;
-    Items[Items[&quot;Baz&quot;] = 2] = &quot;Baz&quot;;
-})(Items || (Items = {}));
+<pre><code class="lang-typescript">&#39;use strict&#39;
+var Items
+;(function (Items) {
+  Items[(Items[&#39;Foo&#39;] = 0)] = &#39;Foo&#39;
+  Items[(Items[&#39;Bar&#39;] = 1)] = &#39;Bar&#39;
+  Items[(Items[&#39;Baz&#39;] = 2)] = &#39;Baz&#39;
+})(Items || (Items = {}))
 </code></pre>
 <p><code>obj[k] = v</code> 的返回值即是 v，因此这里的 <code>obj[obj[k] = v] = k</code> 本质上就是进行了 <code>obj[k] = v</code> 与 <code>obj[v] = k</code> 这样两次赋值。</p>
 <p>但需要注意的是，仅有值为数字的枚举成员才能够进行这样的双向枚举，<strong>字符串枚举成员仍然只会进行单次映射</strong>：</p>
 <pre><code class="lang-typescript">enum Items {
   Foo,
-  Bar = &quot;BarValue&quot;,
-  Baz = &quot;BazValue&quot;
+  Bar = &#39;BarValue&#39;,
+  Baz = &#39;BazValue&#39;,
 }
 
 // 编译结果，只会进行 键-值 的单向映射
-&quot;use strict&quot;;
-var Items;
-(function (Items) {
-    Items[Items[&quot;Foo&quot;] = 0] = &quot;Foo&quot;;
-    Items[&quot;Bar&quot;] = &quot;BarValue&quot;;
-    Items[&quot;Baz&quot;] = &quot;BazValue&quot;;
-})(Items || (Items = {}));
+;(&#39;use strict&#39;)
+var Items
+;(function (Items) {
+  Items[(Items[&#39;Foo&#39;] = 0)] = &#39;Foo&#39;
+  Items[&#39;Bar&#39;] = &#39;BarValue&#39;
+  Items[&#39;Baz&#39;] = &#39;BazValue&#39;
+})(Items || (Items = {}))
 </code></pre>
 <p>除了数字枚举与字符串枚举这种分类以外，其实还存在着普通枚举与常量枚举这种分类方式。</p>
 <h3 id="常量枚举"><a href="#常量枚举" class="headerlink" title="常量枚举"></a>常量枚举</h3><p>常量枚举和枚举相似，只是其声明多了一个 const：</p>
 <pre><code class="lang-typescript">const enum Items {
   Foo,
   Bar,
-  Baz
+  Baz,
 }
 
-const fooValue = Items.Foo; // 0
+const fooValue = Items.Foo // 0
 </code></pre>
 <p>它和普通枚举的差异主要在访问性与编译产物。对于常量枚举，你<strong>只能通过枚举成员访问枚举值</strong>（而不能通过值访问成员）。同时，在编译产物中并不会存在一个额外的辅助对象（如上面的 Items 对象），对枚举成员的访问会被<strong>直接内联替换为枚举的值</strong>。以上的代码会被编译为如下形式：</p>
-<pre><code class="lang-javascript">const fooValue = 0 /* Foo */; // 0
+<pre><code class="lang-javascript">const fooValue = 0 /* Foo */ // 0
 </code></pre>
 <blockquote>
 <p>实际上，常量枚举的表现、编译产物还受到配置项 <code>--isolatedModules</code> 以及 <code>--preserveConstEnums</code> 等的影响，我们会在后面的 TSConfig 详解中了解更多。</p>

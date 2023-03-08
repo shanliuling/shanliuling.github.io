@@ -1,4 +1,6 @@
-<p>在这一节，我们会使用 TypeScript 来开发一个 Node API，并将它部署在服务器上。技术选型方面，我们使用 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fdocs.nestjs.com%2F">NestJs</a> 作为框架，<a href="https://link.juejin.cn/?target=https%3A%2F%2Fwww.prisma.io%2F">Prisma</a> 作为 ORM，<a href="https://link.juejin.cn/?target=https%3A%2F%2Fdashboard.heroku.com%2Fapps">Heroku</a> 作为部署平台与数据库提供商。</p>
+<hr>
+<p>title: 29.基于 Prisma + NestJs 的 Node API ：前置知识储备<br>date: 2023-02-16 16:29:28<br>tags: TypeScript<br>updated: 更新日期<br>cover:<br>description: TS全面进阶指南<br>categories: TS全面进阶指南<br>highlight_shrink: false</p>
+<h2 id="index-false"><a href="#index-false" class="headerlink" title="index: false"></a>index: false</h2><p>在这一节，我们会使用 TypeScript 来开发一个 Node API，并将它部署在服务器上。技术选型方面，我们使用 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fdocs.nestjs.com%2F">NestJs</a> 作为框架，<a href="https://link.juejin.cn/?target=https%3A%2F%2Fwww.prisma.io%2F">Prisma</a> 作为 ORM，<a href="https://link.juejin.cn/?target=https%3A%2F%2Fdashboard.heroku.com%2Fapps">Heroku</a> 作为部署平台与数据库提供商。</p>
 <p>需要说明的是，我们要开发的 API 并不会十分完善。一方面，过多的 CRUD 代码并没有教学意义。另一方面，如果要完整开发一个生产可用的 API ，可能还需要再写一本小册才行。</p>
 <p>那你可能会问，上面说的工具我都不了解怎么办呀？比较友好的一点是，你不需要对这几个工具非常了解，因为我们会分别介绍相应的前置知识。更加友好的是，你也不需要有自己的服务器与数据库，Heroku 已经帮我们准备好了。</p>
 <p>但你仍然需要有基本的 NodeJs 使用经验，至少使用 Express / Koa 进行过基本的 API 开发，以及了解数据库、ORM 的基本知识。</p>
@@ -21,13 +23,13 @@ curl https://cli-assets.heroku.com/install.sh | sh
 <p>而框架能力其实也是许多团队与企业在技术选型时的重要参考因素。在这一点上，就像 Angular 内置了路由、请求、表单、校验、SSR 等能力，是一个真正意义上的“全家桶”。Nest 也是如此，官方团队基本上已经把 95% 以上的能力都提供完毕，包括 ORM 的集成（<code>@nestjs/mongoose</code>, <code>@nestjs/typeorm</code>）、消息队列（<code>@nestjs/bull</code>）、Open API（<code>@nestjs/swagger</code>）、鉴权（<code>@nestjs/passport</code>）、GraphQL （<code>@nestjs/graphql</code>, <code>@nestjs/apollo</code> ）等等。在大部分情况下，这些能力以及附带的详细文档就能很好地满足你的需求。</p>
 <p>当然，没有事物是十全十美的。我个人认为 Nest 不友好的地方在于，新手可能需要一些时间才能理解其模块作用域与依赖各种关系，imports、provides、providers、exports 等概念确实不是很好理解。</p>
 <p>既然说基础了，那我们还是要介绍一下基本使用代码，这段代码我们在装饰器一节中已经很熟悉了：</p>
-<pre><code class="lang-typescript">import { Controller, Get } from &#39;@nestjs/common&#39;;
+<pre><code class="lang-typescript">import { Controller, Get } from &#39;@nestjs/common&#39;
 
 @Controller(&#39;cats&#39;)
 export class CatsController {
   @Get()
   findAll(): string {
-    return &#39;This action returns all cats&#39;;
+    return &#39;This action returns all cats&#39;
   }
 }
 </code></pre>
@@ -50,8 +52,8 @@ nest new &lt;application&gt;
 <p>我们来简单介绍一下重要文件的功能，更好地了解 NestJs 的开发风格。</p>
 <ul>
 <li><p><code>app.controller.ts</code>，即 API 路由的定义文件，我们在这里去定义 <code>GET /user/list</code> <code>POST /user/add</code> 这样的请求处理逻辑。需要注意的是，在 Nest 应用中我们一般不会在 Controller 中去处理业务逻辑，Controller 通常只会处理请求入参的校验、请求响应的包装，具体的业务逻辑来自于 <code>app.service.ts</code>。</p>
-<pre><code class="lang-typescript">import { Controller, Get } from &#39;@nestjs/common&#39;;
-import { AppService } from &#39;./app.service&#39;;
+<pre><code class="lang-typescript">import { Controller, Get } from &#39;@nestjs/common&#39;
+import { AppService } from &#39;./app.service&#39;
 
 @Controller()
 export class AppController {
@@ -59,26 +61,26 @@ export class AppController {
 
   @Get()
   getHello(): string {
-    return this.appService.getHello();
+    return this.appService.getHello()
   }
 }
 </code></pre>
 </li>
 <li><p><code>app.service.ts</code>，我们在 Service 层去处理数据库交互、BFF、日志等等的逻辑，然后供 Controller 层来调用。这并不意味着 Controller 中有一个 UpdateUser 处理方法，那么 Service 层中也要有专门的 UpdateUser 方法。更好的方式是将 Service 拆得更细一些，如 UpdateUser 需要依次调用 QueryUser （检查当前用户是否存在）、CheckUserMutationAvaliable （当前用户是否被允许进行信息更新）、UpdateUser （更新用户）、NoticeUserFollowerUpdate （提醒用户的粉丝发生了资料更新）等等数个细粒度的 Service 。这样一来，在未来新增 Controller 时，你只需要重新按照逻辑组装 Service 即可，而不需要再完全重写一个功能大半相似的。</p>
-<pre><code class="lang-typescript">import { Injectable } from &#39;@nestjs/common&#39;;
+<pre><code class="lang-typescript">import { Injectable } from &#39;@nestjs/common&#39;
 
 @Injectable()
 export class AppService {
   getHello(): string {
-    return &#39;Hello World!&#39;;
+    return &#39;Hello World!&#39;
   }
 }
 </code></pre>
 </li>
 <li><p><code>app.module.ts</code>，这一文件是应用的核心文件，我们需要这一模块才能在 <code>main.ts</code> 中去启动应用。在实际开发中，可能会有多个 <code>.module.ts</code> 文件来实现对业务逻辑的模块拆分，如 <code>user.module.ts</code>、<code>upload.module.ts</code> 等。同时，在这个文件内我们会定义属于这一模块的 Controller 与 Service ，别的模块可以通过导入这个模块来使用内部的 Service ，而不是直接导入 Service 造成模块间的混乱引用。</p>
-<pre><code class="lang-typescript">import { Module } from &#39;@nestjs/common&#39;;
-import { AppController } from &#39;./app.controller&#39;;
-import { AppService } from &#39;./app.service&#39;;
+<pre><code class="lang-typescript">import { Module } from &#39;@nestjs/common&#39;
+import { AppController } from &#39;./app.controller&#39;
+import { AppService } from &#39;./app.service&#39;
 
 @Module({
   imports: [],
@@ -89,36 +91,36 @@ export class AppModule {}
 </code></pre>
 </li>
 <li><p><code>main.ts</code>，最终启动的入口文件，在这里我们定义全局级别的应用配置。</p>
-<pre><code class="lang-typescript">import { NestFactory } from &#39;@nestjs/core&#39;;
-import { AppModule } from &#39;./app.module&#39;;
-import chalk from &#39;chalk&#39;;
+<pre><code class="lang-typescript">import { NestFactory } from &#39;@nestjs/core&#39;
+import { AppModule } from &#39;./app.module&#39;
+import chalk from &#39;chalk&#39;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  await app.listen(3000);
+  const app = await NestFactory.create(AppModule)
+  await app.listen(3000)
 }
-bootstrap();
+bootstrap()
 </code></pre>
 </li>
 </ul>
 <p>项目中文件的基本功能就介绍到这里，在扩展阅读部分，我们还会介绍 NestJs 应用中两种不同的目录结构组织方式，如果你感兴趣可以去读一下。接下来，我们来了解本节应用中的另一个重要部分：Prisma ORM。</p>
 <h2 id="Prisma-基础"><a href="#Prisma-基础" class="headerlink" title="Prisma 基础"></a>Prisma 基础</h2><p><a href="https://link.juejin.cn/?target=https%3A%2F%2Fwww.prisma.io%2F">Prisma</a> 是一个“比较特殊”的 ORM，为什么这么说呢？我们知道，ORM 库（Object-Relational Mapping），其实就是编程语言到 SQL 的映射，也就是说，我们无需学习 SQL 的使用，直接用最熟悉的代码调用方法，即可与数据库进行交互。</p>
 <p>而 NodeJs 中的 ORM 目前基本都是通过 js / ts 文件进行定义的，比如 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fsequelize%2Fsequelize">Sequelize</a>、<a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Ftypeorm%2Ftypeorm">TypeORM</a> 等，均是通过面向对象的方式进行数据库实体的定义：</p>
-<pre><code class="lang-typescript">import { Entity, PrimaryGeneratedColumn, Column } from &quot;typeorm&quot;;
+<pre><code class="lang-typescript">import { Entity, PrimaryGeneratedColumn, Column } from &#39;typeorm&#39;
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: number
 
   @Column()
-  firstName: string;
+  firstName: string
 
   @Column()
-  lastName: string;
+  lastName: string
 
   @Column()
-  age: number;
+  age: number
 }
 </code></pre>
 <p>这就是 Prisma 最特殊的一点，它使用自己的 SDL（Schema Define Language，也可以说是 DSL ，Domain-Specified Language）来声明一个实体：</p>
@@ -216,9 +218,9 @@ model Article {
 <p>这里的 Prisma Client 会被生成到 <code>node_modules/@prisma/client</code> 下：</p>
 <p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ce733ab100514fb8ac4bce6f17c3601d~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp" alt="image013d3fbf7ddad47c.png"></p>
 <p>而在实际使用时，我们就需要导入它并实例化：</p>
-<pre><code class="lang-typescript">import { PrismaClient } from &#39;@prisma/client&#39;;
+<pre><code class="lang-typescript">import { PrismaClient } from &#39;@prisma/client&#39;
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 </code></pre>
 <p>接下来，你将体验到 Prisma 最大的特色之一：类型安全。我们尝试访问以下 prisma 的属性：</p>
 <p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5158276dadf04997bc8553d2405702af~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp" alt="image749525dface6a1d2.png"></p>
@@ -235,8 +237,8 @@ const prisma = new PrismaClient();
   Injectable,
   OnApplicationShutdown,
   OnApplicationBootstrap,
-} from &#39;@nestjs/common&#39;;
-import { PrismaClient } from &#39;@prisma/client&#39;;
+} from &#39;@nestjs/common&#39;
+import { PrismaClient } from &#39;@prisma/client&#39;
 
 @Injectable()
 export class PrismaService
@@ -244,23 +246,23 @@ export class PrismaService
   implements OnApplicationBootstrap, OnApplicationShutdown
 {
   constructor() {
-    super();
+    super()
   }
 
   async onApplicationBootstrap() {
-    await this.$connect();
+    await this.$connect()
   }
 
   async onApplicationShutdown() {
-    await this.$disconnect();
+    await this.$disconnect()
   }
 }
 </code></pre>
 <p><code>onApplicationBootstrap</code> 和 <code>onApplicationShutdown</code> 是 NestJs 提供的应用级生命周期，我们继承 PrismaClient，通过 implements 来实现这两个方法，然后分别在启动与停止阶段与数据库连接、断开连接。</p>
 <p>在前面我们已经提到，Prisma Client 需要被实例化后才能使用。我们这里的 PrismaService 也是，但是如果某一处代码需要使用它，IoC 容器在交给它这个类时就会进行实例化过程。</p>
 <p>然后新建 <code>prisma.module.ts</code>：</p>
-<pre><code class="lang-typescript">import { Global, Module } from &#39;@nestjs/common&#39;;
-import { PrismaService } from &#39;./prisma.service&#39;;
+<pre><code class="lang-typescript">import { Global, Module } from &#39;@nestjs/common&#39;
+import { PrismaService } from &#39;./prisma.service&#39;
 
 @Global()
 @Module({
@@ -271,7 +273,7 @@ export default class PrismaModule {}
 </code></pre>
 <p>通过这种方式，Prisma 相关的所有能力都被归纳在这个模块中，后续你还可以继续添加如 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fwww.prisma.io%2Fdocs%2Fconcepts%2Fcomponents%2Fprisma-client%2Fmiddleware">Prisma Middleware</a> 的功能。</p>
 <p>接着别忘了将 Prisma Module 也添加到 AppModule 中：</p>
-<pre><code class="lang-typescript">import PrismaModule from &#39;./data/prisma.module&#39;;
+<pre><code class="lang-typescript">import PrismaModule from &#39;./data/prisma.module&#39;
 
 @Module({
   imports: [PrismaModule],
@@ -279,33 +281,33 @@ export default class PrismaModule {}
 export class AppModule {}
 </code></pre>
 <p>这样，其他地方的 Service 就可以使用 Prisma Service 了！</p>
-<pre><code class="lang-typescript">import { PrismaService } from &#39;../data/prisma.service&#39;;
+<pre><code class="lang-typescript">import { PrismaService } from &#39;../data/prisma.service&#39;
 
 @Injectable()
 export class ArticleService {
   constructor(private prisma: PrismaService) {}
 
   async query(): Promise&lt;Article[]&gt; {
-    const res = await this.prisma.article.findMany();
-    return res;
+    const res = await this.prisma.article.findMany()
+    return res
   }
 }
 </code></pre>
 <p>还记得我们在前面说到，Prisma 的核心优势之一就是它的类型安全，它会基于 Prisma Schema 生成对应的 TypeScript 类型定义，而我们实际上可以直接复用这些类型。</p>
 <p>新建 <code>src/types/index.ts</code> ，这里会存放项目中的类型定义，在这个项目中我们只需要使用从 Prisma Client 中导出的：</p>
-<pre><code class="lang-typescript">import type { Prisma } from &#39;@prisma/client&#39;;
+<pre><code class="lang-typescript">import type { Prisma } from &#39;@prisma/client&#39;
 
-export type ArticleCreateInput = Prisma.ArticleCreateInput;
+export type ArticleCreateInput = Prisma.ArticleCreateInput
 export type ArticleUpdateInput = Prisma.ArticleUpdateInput &amp;
-  Prisma.ArticleWhereUniqueInput;
+  Prisma.ArticleWhereUniqueInput
 
-export type { Article, Tag, Category } from &#39;@prisma/client&#39;;
+export type { Article, Tag, Category } from &#39;@prisma/client&#39;
 
 // ...类似的
 </code></pre>
 <p>直接在代码中使用这些类型：</p>
-<pre><code class="lang-typescript">import { PrismaService } from &#39;../data/prisma.service&#39;;
-import { Article, ArticleCreateInput, ArticleUpdateInput } from &#39;../types&#39;;
+<pre><code class="lang-typescript">import { PrismaService } from &#39;../data/prisma.service&#39;
+import { Article, ArticleCreateInput, ArticleUpdateInput } from &#39;../types&#39;
 
 @Injectable()
 export class ArticleService {
@@ -314,9 +316,9 @@ export class ArticleService {
   async create(createInput: ArticleCreateInput): Promise&lt;Article&gt; {
     const res = await this.prisma.article.create({
       data: createInput,
-    });
+    })
 
-    return res;
+    return res
   }
 
   async update(updateInput: ArticleUpdateInput): Promise&lt;Article&gt; {
@@ -325,9 +327,9 @@ export class ArticleService {
       where: {
         id: updateInput.id,
       },
-    });
+    })
 
-    return res;
+    return res
   }
 }
 </code></pre>
@@ -366,73 +368,73 @@ export class ArticleService {
 </code></pre>
 <p>此时我们的 Controller、Service 都会被归类到对应业务逻辑的文件夹下，每个业务逻辑拥有自己的 Module ，然后再在 AppModule 中汇总。</p>
 <p>这一方式适合存在一定规模的项目，以及内部业务模块分类较多的情况，此时使用基于逻辑的目录结构划分可以帮助你更好地进行模块拆分，同时获得更直观的模块依赖关系。</p>
-<h3 id="Data-Mapper-与-Active-Record"><a href="#Data-Mapper-与-Active-Record" class="headerlink" title="Data Mapper 与 Active Record"></a>Data Mapper 与 Active Record</h3><p>即使你此前已经有过 ORM 的实践经验，还有两个概念可能是你未了解过的，即 <strong>Data Mapper</strong> 与 <strong>Active Record</strong> 。TypeORM的简介中提到，<strong><em>TypeORM supports both Active Record and Data Mapper patterns</em></strong>，即它同时支持了这两种模式。那么这两种模式对代码有什么影响，它们的差别又是什么？</p>
+<h3 id="Data-Mapper-与-Active-Record"><a href="#Data-Mapper-与-Active-Record" class="headerlink" title="Data Mapper 与 Active Record"></a>Data Mapper 与 Active Record</h3><p>即使你此前已经有过 ORM 的实践经验，还有两个概念可能是你未了解过的，即 <strong>Data Mapper</strong> 与 <strong>Active Record</strong> 。TypeORM 的简介中提到，<strong><em>TypeORM supports both Active Record and Data Mapper patterns</em></strong>，即它同时支持了这两种模式。那么这两种模式对代码有什么影响，它们的差别又是什么？</p>
 <p>先来看 Active Record 模式下的 TypeORM 代码：</p>
-<pre><code class="lang-typescript">import { BaseEntity, Entity, PrimaryGeneratedColumn, Column } from &quot;typeorm&quot;;
+<pre><code class="lang-typescript">import { BaseEntity, Entity, PrimaryGeneratedColumn, Column } from &#39;typeorm&#39;
 
 @Entity()
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: number
 
   @Column()
-  name: string;
+  name: string
 
   @Column()
-  isActive: boolean;
+  isActive: boolean
 }
 
-const user = new User();
-user.name = &quot;不渡&quot;;
-user.isActive = true;
+const user = new User()
+user.name = &#39;不渡&#39;
+user.isActive = true
 
-await user.save();
+await user.save()
 
-const newUsers = await User.find({ isActive: true });
+const newUsers = await User.find({ isActive: true })
 </code></pre>
-<p>TypeORM中，Active Record 模式下需要让实体类继承 <code>BaseEntity</code>类，然后实体类上就具有了各种操作方法，如 <code>save</code> <code>remove</code> <code>find</code>方法等。Active Record 模式最早由 Martin Fowle在 <strong><em>企业级应用架构模式</em></strong> 一书中命名，即直接在对象上支持相关的 CRUD 方法。</p>
+<p>TypeORM 中，Active Record 模式下需要让实体类继承 <code>BaseEntity</code>类，然后实体类上就具有了各种操作方法，如 <code>save</code> <code>remove</code> <code>find</code>方法等。Active Record 模式最早由 Martin Fowle 在 <strong><em>企业级应用架构模式</em></strong> 一书中命名，即直接在对象上支持相关的 CRUD 方法。</p>
 <p>而 Data Mapper 下的代码则是这样的：</p>
-<pre><code class="lang-typescript">import { Entity, PrimaryGeneratedColumn, Column } from &quot;typeorm&quot;;
+<pre><code class="lang-typescript">import { Entity, PrimaryGeneratedColumn, Column } from &#39;typeorm&#39;
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: number
 
   @Column()
-  name: string;
+  name: string
 
   @Column()
-  isActive: boolean;
+  isActive: boolean
 }
 
-const userRepository = connection.getRepository(User);
+const userRepository = connection.getRepository(User)
 
-const user = new User();
-user.name = &quot;不渡&quot;;
-user.isActive = true;
+const user = new User()
+user.name = &#39;不渡&#39;
+user.isActive = true
 
-await userRepository.save(user);
+await userRepository.save(user)
 
-await userRepository.remove(user);
+await userRepository.remove(user)
 
-const newUsers = await userRepository.find({ isActive: true });
+const newUsers = await userRepository.find({ isActive: true })
 </code></pre>
 <p>在 Data Mapper 模式下，实体类不能够自己进行数据库操作，而是需要先获取到一个对应到表的“仓库”，然后再调用这个“仓库”上的方法。</p>
 <p>这一模式同样由 Martin Fowler 前辈最初命名，Data Mapper 就像是一层拦在操作者与实际数据之间的访问层，就如上面例子中，需要先获取具有访问权限（即相应方法）的对象，再进行数据的操作。</p>
-<p>对这两个模式进行比较，很容易发现 Active Record 模式要更加简单，适用于较简单的应用。可以减少很多代码。而 Data Mapper 模式则更加严谨，适用于开发规模较大的应用，一个例子是在 Nest 的 TypeORM 集成包中，也是注入Repository实例然后再进行操作的，即也属于 Data Mapper 模式。</p>
+<p>对这两个模式进行比较，很容易发现 Active Record 模式要更加简单，适用于较简单的应用。可以减少很多代码。而 Data Mapper 模式则更加严谨，适用于开发规模较大的应用，一个例子是在 Nest 的 TypeORM 集成包中，也是注入 Repository 实例然后再进行操作的，即也属于 Data Mapper 模式。</p>
 <p>最后，实际上 Prisma 使用的也是 Data Mapper 模式，我们需要 Prisma Client 来作为访问层。</p>
 <h3 id="ORM-与-QueryBuilder"><a href="#ORM-与-QueryBuilder" class="headerlink" title="ORM 与 QueryBuilder"></a>ORM 与 QueryBuilder</h3><p>ORM 并不是唯一一种让我们可以不用写 SQL 就能操作数据库的方式，同时它也不是最贴近 SQL 的方式。</p>
 <p>Query Builder 就是这另外一种使用方式，它和 ORM 一样，通过编程语言书写，但不同的是它并不包括实体类映射到数据库表的部分，而只是负责 Query 。</p>
 <p>以 TypeORM 的 Query Builder 模式为例：</p>
-<pre><code class="lang-typescript">import { getConnection } from &quot;typeorm&quot;;
+<pre><code class="lang-typescript">import { getConnection } from &#39;typeorm&#39;
 
 const user = await getConnection()
   .createQueryBuilder()
-  .select(&quot;user&quot;)
-  .from(User, &quot;user&quot;)
-  .where(&quot;user.id = :id&quot;, { id: 1 })
-  .getOne();
+  .select(&#39;user&#39;)
+  .from(User, &#39;user&#39;)
+  .where(&#39;user.id = :id&#39;, { id: 1 })
+  .getOne()
 </code></pre>
 <p>这么一连串的链式调用，其实就等价于 <code>userRepo.find({ id: 1 })</code> 的作用，看起来更麻烦了，但你是否感觉到了灵活性的成倍增长？在 Query Builder 中，，每一次链式调用都会对最终生成的 SQL 产生一些调整，因此我们可以通过非常细粒度的调整来更加的贴近原生 SQL 。</p>
 <p>除了 TypeORM 以外，Node 中使用较多的 Query Builder 还包括 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fknex%2Fknex">knex</a>、<a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fkoskimas%2Fkysely">kysely</a> 等。</p>
